@@ -20,6 +20,15 @@ from PIL import Image
 
 NUMBER_SUB_IMAGES = 1600
 
+def init_directory():
+    if not os.path.exists('data'):
+
+        os.makedirs('data/train/final')
+        os.makedirs('data/train/noisy')
+
+        os.makedirs('data/validation/final')
+        os.makedirs('data/validation/noisy')
+
 def create_images(folder, output_folder):
     images_path = glob.glob(folder + "/*.png")
 
@@ -35,6 +44,9 @@ def generate_dataset():
     create_images('img_validation/noisy', 'data/validation/noisy')
 
 def main():
+
+    init_directory()
+
     # create database using img folder (generate first time only)
     generate_dataset()
 
