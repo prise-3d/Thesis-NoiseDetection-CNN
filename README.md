@@ -21,3 +21,7 @@ After your built your neural network in classification_cnn_keras.py, you just ha
 ```
 python classification_cnn_keras.py
 ```
+
+## How to contribute
+
+This git project uses [git-flow](https://danielkummer.github.io/git-flow-cheatsheet/) implementation. You are free to contribute to it.
