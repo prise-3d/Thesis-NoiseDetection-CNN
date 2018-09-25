@@ -1,4 +1,7 @@
 Pillow
 keras
 tensorflow
+sklearn
 image_slicer
+pydot
+matplotlib
