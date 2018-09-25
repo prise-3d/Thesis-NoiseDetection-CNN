@@ -7,18 +7,12 @@ Created on Fri Sep 14 21:02:42 2018
 """
 
 from __future__ import print_function
-import keras
-from keras.datasets import cifar10
-from keras.preprocessing.image import ImageDataGenerator
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, Flatten
-from keras.layers import Conv2D, MaxPooling2D
 import os, glob, image_slicer
 from PIL import Image
 
 # show to create own dataset https://gist.github.com/fchollet/0830affa1f7f19fd47b06d4cf89ed44d
 
-NUMBER_SUB_IMAGES = 1600
+NUMBER_SUB_IMAGES = 100
 
 def init_directory():
     if not os.path.exists('data'):
