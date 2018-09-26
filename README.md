@@ -14,18 +14,22 @@ python generate_dataset.py
 ```
 
 It will split scenes and generate all data you need for your neural network.
-You can specify the number of sub images you want in the script by modifying **_NUMBER_SUB_IMAGES_** variables.
+You can specify the number of sub images you want in the script by modifying **_NUMBER_SUB_IMAGES_** variable or using parameter.
+
+```
+python generate_dataset.py --nb xxxx
+```
 
 There are 3 kinds of Neural Networks :
 - **classification_cnn_keras.py** : *based on cropped images and do convolution*
 - **classification_cnn_keras_cross_validation.py** : *based on cropped images and do convolution. Data are randomly split for training*
 - **classification_cnn_keras_svd.py** : *based on svd metrics of image*
 
-Note that the image input size need to change in you used specific size for your croped images.
 
 After your built your neural network in classification_cnn_keras.py, you just have to run it :
+
 ```
-classification_cnn_keras_svd.py --directory xxxx --output xxxxx --batch_size xx --epochs xx --img xx (or --image_width xx --img_height xx)
+python classification_cnn_keras_svd.py --directory xxxx --output xxxxx --batch_size xx --epochs xx --img xx (or --image_width xx --img_height xx)
 ```
 
 A config file in json is available and keeps in memory all image sizes available.
