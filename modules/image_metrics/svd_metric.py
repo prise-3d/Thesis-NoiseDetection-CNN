@@ -11,7 +11,7 @@ Method which extracts SVD features from image and returns 's' vector
 def get_s_model_data(image):
     U, s, V = svd(image, full_matrices=False)
     size = len(s)
-    result = s.reshape([size, 1, 1]) # one shape per canal
+    result = s.reshape([size, 1, 3]) # one shape per canal
     return result
 
 def get(image):
