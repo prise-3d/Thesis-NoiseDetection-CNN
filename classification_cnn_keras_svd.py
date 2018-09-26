@@ -80,24 +80,44 @@ def generate_model():
     model.add(MaxPooling2D(pool_size=(2, 1)))
 
     model.add(Flatten())
-    model.add(BatchNormalization())
-    model.add(Dense(300, kernel_regularizer=l2(0.01)))
+    model.add(Dense(50, kernel_regularizer=l2(0.01)))
     model.add(Activation('relu'))
-    model.add(Dropout(0.4))
-
-    model.add(Dense(30, kernel_regularizer=l2(0.01)))
     model.add(BatchNormalization())
-    model.add(Activation('relu'))
-    model.add(Dropout(0.3))
+    model.add(Dropout(0.1))
 
     model.add(Dense(100, kernel_regularizer=l2(0.01)))
-    model.add(BatchNormalization())
     model.add(Activation('relu'))
+    model.add(BatchNormalization())
+    model.add(Dropout(0.1))
+
+    model.add(Dense(200, kernel_regularizer=l2(0.01)))
+    model.add(Activation('relu'))
+    model.add(BatchNormalization())
     model.add(Dropout(0.2))
 
-    model.add(Dense(20, kernel_regularizer=l2(0.01)))
-    model.add(BatchNormalization())
+    model.add(Dense(300, kernel_regularizer=l2(0.01)))
     model.add(Activation('relu'))
+    model.add(BatchNormalization())
+    model.add(Dropout(0.3))
+
+    model.add(Dense(200, kernel_regularizer=l2(0.01)))
+    model.add(Activation('relu'))
+    model.add(BatchNormalization())
+    model.add(Dropout(0.2))
+
+    model.add(Dense(100, kernel_regularizer=l2(0.01)))
+    model.add(Activation('relu'))
+    model.add(BatchNormalization())
+    model.add(Dropout(0.1))
+
+    model.add(Dense(50, kernel_regularizer=l2(0.01)))
+    model.add(Activation('relu'))
+    model.add(BatchNormalization())
+    model.add(Dropout(0.1))
+
+    model.add(Dense(20, kernel_regularizer=l2(0.01)))
+    model.add(Activation('relu'))
+    model.add(BatchNormalization())
     model.add(Dropout(0.1))
 
     model.add(Dense(1))

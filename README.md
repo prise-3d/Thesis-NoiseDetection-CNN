@@ -17,8 +17,8 @@ It will split scenes and generate all data you need for your neural network.
 You can specify the number of sub images you want in the script by modifying **_NUMBER_SUB_IMAGES_** variables.
 
 There are 3 kinds of Neural Networks :
-- **classification_cnn_keras.py** : *based croped on images*
-- **classification_cnn_keras_crossentropy.py** : *based croped on images which are randomly split for training*
+- **classification_cnn_keras.py** : *based on cropped images and do convolution*
+- **classification_cnn_keras_cross_validation.py** : *based on cropped images and do convolution. Data are randomly split for training*
 - **classification_cnn_keras_svd.py** : *based on svd metrics of image*
 
 Note that the image input size need to change in you used specific size for your croped images.
