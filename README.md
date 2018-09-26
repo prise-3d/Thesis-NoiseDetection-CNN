@@ -25,8 +25,10 @@ Note that the image input size need to change in you used specific size for your
 
 After your built your neural network in classification_cnn_keras.py, you just have to run it :
 ```
-python classification_cnn_keras.py
+classification_cnn_keras_svd.py --directory xxxx --output xxxxx --batch_size xx --epochs xx --img xx (or --image_width xx --img_height xx)
 ```
+
+A config file in json is available and keeps in memory all image sizes available.
 
 ## Modules
 
