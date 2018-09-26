@@ -23,6 +23,7 @@ data/
             ...
 ```
 '''
+import sys, os, getopt
 
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
@@ -31,17 +32,20 @@ from keras.layers import Activation, Dropout, Flatten, Dense, BatchNormalization
 from keras.optimizers import Adam
 from keras.regularizers import l2
 from keras import backend as K
-from numpy.linalg import svd
+from keras.utils import plot_model
+
+import matplotlib.pyplot as plt
+
 import tensorflow as tf
 import numpy as np
-from PIL import Image
 
-from scipy import misc
-import matplotlib.pyplot as plt
-import keras as k
+from modules.model_helper import plot_info
+from modules.image_metrics import svd_metric
 
+
+# configuration
 # dimensions of our images.
-img_width, img_height = int(100), 1
+img_width, img_height = 100, 1
 
 train_data_dir = 'data/train'
 validation_data_dir = 'data/validation'
@@ -50,97 +54,164 @@ nb_validation_samples = 3600
 epochs = 200
 batch_size = 30
 
-# configuration
-config = tf.ConfigProto(intra_op_parallelism_threads=6, inter_op_parallelism_threads=6, \
-                        allow_soft_placement=True, device_count = {'CPU': 6})
-session = tf.Session(config=config)
-K.set_session(session)
-
-def svd_singular(image):
-    U, s, V = svd(image, full_matrices=False)
-    s = s[0:img_width]
-    result = s.reshape([img_width, 1, 1]) # one shape per canal
-    return result
-
 if K.image_data_format() == 'channels_first':
     input_shape = (3, img_width, img_height)
 else:
     input_shape = (img_width, img_height, 3)
 
-model = Sequential()
+'''
+Method which returns model to train
+@return : DirectoryIterator
+'''
+def generate_model():
 
-model.add(Conv2D(100, (2, 1), input_shape=input_shape))
-model.add(Activation('relu'))
-model.add(MaxPooling2D(pool_size=(2, 1)))
+    model = Sequential()
 
-model.add(Conv2D(80, (2, 1)))
-model.add(Activation('relu'))
-model.add(AveragePooling2D(pool_size=(2, 1)))
+    model.add(Conv2D(100, (2, 1), input_shape=input_shape))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 1)))
 
-model.add(Conv2D(50, (2, 1)))
-model.add(Activation('relu'))
-model.add(MaxPooling2D(pool_size=(2, 1)))
+    model.add(Conv2D(80, (2, 1)))
+    model.add(Activation('relu'))
+    model.add(AveragePooling2D(pool_size=(2, 1)))
 
-model.add(Flatten())
-model.add(BatchNormalization())
-model.add(Dense(300, kernel_regularizer=l2(0.01)))
-model.add(Activation('relu'))
-model.add(Dropout(0.4))
+    model.add(Conv2D(50, (2, 1)))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 1)))
 
-model.add(Dense(30, kernel_regularizer=l2(0.01)))
-model.add(BatchNormalization())
-model.add(Activation('relu'))
-model.add(Dropout(0.3))
+    model.add(Flatten())
+    model.add(BatchNormalization())
+    model.add(Dense(300, kernel_regularizer=l2(0.01)))
+    model.add(Activation('relu'))
+    model.add(Dropout(0.4))
 
-model.add(Dense(100, kernel_regularizer=l2(0.01)))
-model.add(BatchNormalization())
-model.add(Activation('relu'))
-model.add(Dropout(0.2))
+    model.add(Dense(30, kernel_regularizer=l2(0.01)))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Dropout(0.3))
 
-model.add(Dense(20, kernel_regularizer=l2(0.01)))
-model.add(BatchNormalization())
-model.add(Activation('relu'))
-model.add(Dropout(0.1))
+    model.add(Dense(100, kernel_regularizer=l2(0.01)))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Dropout(0.2))
 
-model.add(Dense(1))
-model.add(Activation('sigmoid'))
+    model.add(Dense(20, kernel_regularizer=l2(0.01)))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Dropout(0.1))
 
-model.compile(loss='binary_crossentropy',
-              optimizer='rmsprop',
-              metrics=['accuracy'])
+    model.add(Dense(1))
+    model.add(Activation('sigmoid'))
 
-# this is the augmentation configuration we will use for training
-train_datagen = ImageDataGenerator(
-    #rescale=1. / 255,
-    #shear_range=0.2,
-    #zoom_range=0.2,
-    #horizontal_flip=True,
-    preprocessing_function=svd_singular)
-# this is the augmentation configuration we will use for testing:
-# only rescaling
-test_datagen = ImageDataGenerator(
-    #rescale=1. / 255,
-    preprocessing_function=svd_singular)
+    model.compile(loss='binary_crossentropy',
+                  optimizer='rmsprop',
+                  metrics=['accuracy'])
 
-train_generator = train_datagen.flow_from_directory(
-    train_data_dir,
-    target_size=(img_width, img_height),
-    batch_size=batch_size,
-    class_mode='binary')
+    return model
 
-validation_generator = test_datagen.flow_from_directory(
-    validation_data_dir,
-    target_size=(img_width, img_height),
-    batch_size=batch_size,
-    class_mode='binary')
+'''
+Method which loads train data
+@return : DirectoryIterator
+'''
+def load_train_data():
+
+    # this is the augmentation configuration we will use for training
+    train_datagen = ImageDataGenerator(
+        rescale=1. / 255,
+        #shear_range=0.2,
+        #zoom_range=0.2,
+        #horizontal_flip=True,
+        preprocessing_function=svd_metric.get_s_model_data)
+
+    train_generator = train_datagen.flow_from_directory(
+        train_data_dir,
+        target_size=(img_width, img_height),
+        batch_size=batch_size,
+        class_mode='binary')
+
+    return train_generator
+
+'''
+Method which loads validation data
+@return : DirectoryIterator
+'''
+def load_validation_data():
+
+    # this is the augmentation configuration we will use for testing:
+    # only rescaling
+    test_datagen = ImageDataGenerator(
+        rescale=1. / 255,
+        preprocessing_function=svd_metric.get_s_model_data)
+
+    validation_generator = test_datagen.flow_from_directory(
+        validation_data_dir,
+        target_size=(img_width, img_height),
+        batch_size=batch_size,
+        class_mode='binary')
+
+    return validation_generator
+
+def main():
+
+    global batch_size
+    global epochs
+
+    if len(sys.argv) <= 1:
+        print('No output file defined...')
+        print('classification_cnn_keras_svd.py --output xxxxx')
+        sys.exit(2)
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "ho:b:e:d", ["help", "directory=", "output=", "batch_size=", "epochs="])
+    except getopt.GetoptError:
+        # print help information and exit:
+        print('classification_cnn_keras_svd.py --output xxxxx')
+        sys.exit(2)
+    for o, a in opts:
+        if o == "-h":
+            print('classification_cnn_keras_svd.py --output xxxxx')
+            sys.exit()
+        elif o in ("-o", "--output"):
+            filename = a
+        elif o in ("-b", "--batch_size"):
+            batch_size = int(a)
+        elif o in ("-e", "--epochs"):
+            epochs = int(a)
+        elif o in ("-d", "--directory"):
+            directory = a
+        else:
+            assert False, "unhandled option"
 
 
-model.summary()
-model.fit_generator(
-    train_generator,
-    steps_per_epoch=nb_train_samples // batch_size,
-    epochs=epochs,
-    validation_data=validation_generator,
-    validation_steps=nb_validation_samples // batch_size)
+    # load of model
+    model = generate_model()
+    model.summary()
 
-model.save_weights('noise_classification_img100.h5')
+    if(directory):
+        print('Your model information will be saved into %s...' % directory)
+
+    history = model.fit_generator(
+        load_train_data(),
+        steps_per_epoch=nb_train_samples // batch_size,
+        epochs=epochs,
+        validation_data=load_validation_data(),
+        validation_steps=nb_validation_samples // batch_size)
+
+    # if user needs output files
+    if(filename):
+
+        # update filename by folder
+        if(directory):
+            # create folder if necessary
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            filename = directory + "/" + filename
+
+        # save plot file history
+        plot_info.save(history, filename)
+
+        plot_model(model, to_file=str(('%s.png' % filename)))
+        model.save_weights(str('%s.h5' % filename))
+
+
+if __name__ == "__main__":
+    main()
