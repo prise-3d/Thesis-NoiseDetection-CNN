@@ -3,9 +3,9 @@
 size=$1
 
 if [ -z ${size} ]; then
-  echo "Run algorithms with image of size ${size}.."
-else 
   echo "Need size parameter : ./run.sh 20"; 
+else 
+  echo "Run algorithms with image of size ${size}.."
 fi
 
 python classification_cnn_keras.py --directory ../models/$size/ --output cnn_model --batch_size 32 --epochs 150 --img $size

@@ -65,17 +65,17 @@ def generate_model():
 
     model = Sequential()
 
-    model.add(Conv2D(100, (2, 1), input_shape=input_shape))
+    model.add(Conv2D(20, (2, 1), input_shape=input_shape))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 1)))
 
-    model.add(Conv2D(80, (2, 1)))
-    model.add(Activation('relu'))
-    model.add(AveragePooling2D(pool_size=(2, 1)))
-
-    model.add(Conv2D(50, (2, 1)))
+    '''model.add(Conv2D(80, (2, 1)))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 1)))
+
+    model.add(Conv2D(20, (2, 1)))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 1)))'''
 
     model.add(Flatten())
     model.add(Dense(50, kernel_regularizer=l2(0.01)))
