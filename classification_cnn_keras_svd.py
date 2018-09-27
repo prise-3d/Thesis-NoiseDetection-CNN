@@ -65,36 +65,41 @@ def generate_model():
 
     model = Sequential()
 
-    model.add(Conv2D(30, (2, 1), input_shape=input_shape))
+    model.add(Conv2D(60, (2, 1), input_shape=input_shape))
     model.add(Activation('relu'))
     model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(2, 1)))
 
-    model.add(Conv2D(20, (2, 1)))
+    model.add(Conv2D(40, (2, 1)))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 1)))
 
-    model.add(Conv2D(10, (2, 1)))
+    model.add(Conv2D(30, (2, 1)))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 1)))
 
     model.add(Flatten())
-    model.add(Dense(70, kernel_regularizer=l2(0.01)))
+    model.add(Dense(150, kernel_regularizer=l2(0.01)))
     model.add(BatchNormalization())
     model.add(Activation('relu'))
-    model.add(Dropout(0.3))
+    model.add(Dropout(0.2))
 
-    model.add(Dense(50, kernel_regularizer=l2(0.01)))
+    model.add(Dense(120, kernel_regularizer=l2(0.01)))
     model.add(BatchNormalization())
     model.add(Activation('relu'))
-    model.add(Dropout(0.4))
+    model.add(Dropout(0.2))
 
-    model.add(Dense(30, kernel_regularizer=l2(0.01)))
+    model.add(Dense(80, kernel_regularizer=l2(0.01)))
     model.add(BatchNormalization())
     model.add(Activation('relu'))
-    model.add(Dropout(0.3))
+    model.add(Dropout(0.2))
 
-    model.add(Dense(10, kernel_regularizer=l2(0.01)))
+    model.add(Dense(40, kernel_regularizer=l2(0.01)))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Dropout(0.2))
+
+    model.add(Dense(20, kernel_regularizer=l2(0.01)))
     model.add(BatchNormalization())
     model.add(Activation('relu'))
     model.add(Dropout(0.1))
