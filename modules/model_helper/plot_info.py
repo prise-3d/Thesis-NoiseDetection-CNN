@@ -1,5 +1,8 @@
 # module filewhich contains helpful display function
 
+# avoid tk issue
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 
 '''

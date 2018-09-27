@@ -35,8 +35,6 @@ from keras.regularizers import l2
 from keras import backend as K
 from keras.utils import plot_model
 
-import matplotlib.pyplot as plt
-
 import tensorflow as tf
 import numpy as np
 
@@ -85,22 +83,7 @@ def generate_model():
     model.add(BatchNormalization())
     model.add(Dropout(0.1))
 
-    model.add(Dense(100, kernel_regularizer=l2(0.01)))
-    model.add(Activation('relu'))
-    model.add(BatchNormalization())
-    model.add(Dropout(0.1))
-
-    model.add(Dense(200, kernel_regularizer=l2(0.01)))
-    model.add(Activation('relu'))
-    model.add(BatchNormalization())
-    model.add(Dropout(0.2))
-
-    model.add(Dense(300, kernel_regularizer=l2(0.01)))
-    model.add(Activation('relu'))
-    model.add(BatchNormalization())
-    model.add(Dropout(0.3))
-
-    model.add(Dense(200, kernel_regularizer=l2(0.01)))
+    model.add(Dense(70, kernel_regularizer=l2(0.01)))
     model.add(Activation('relu'))
     model.add(BatchNormalization())
     model.add(Dropout(0.2))
@@ -108,7 +91,7 @@ def generate_model():
     model.add(Dense(100, kernel_regularizer=l2(0.01)))
     model.add(Activation('relu'))
     model.add(BatchNormalization())
-    model.add(Dropout(0.1))
+    model.add(Dropout(0.2))
 
     model.add(Dense(50, kernel_regularizer=l2(0.01)))
     model.add(Activation('relu'))
@@ -137,7 +120,7 @@ def load_train_data():
 
     # this is the augmentation configuration we will use for training
     train_datagen = ImageDataGenerator(
-        rescale=1. / 255,
+        #rescale=1. / 255,
         #shear_range=0.2,
         #zoom_range=0.2,
         #horizontal_flip=True,
@@ -160,7 +143,7 @@ def load_validation_data():
     # this is the augmentation configuration we will use for testing:
     # only rescaling
     test_datagen = ImageDataGenerator(
-        rescale=1. / 255,
+        #rescale=1. / 255,
         preprocessing_function=svd_metric.get_s_model_data)
 
     validation_generator = test_datagen.flow_from_directory(
@@ -259,7 +242,7 @@ def main():
         # save plot file history
         plot_info.save(history, filename)
 
-        plot_model(model, to_file=str(('%s.png' % filename)))
+        plot_model(model, to_file=str(('%s.png' % filename)), show_shapes=True)
         model.save_weights(str('%s.h5' % filename))
 
 

@@ -4,6 +4,10 @@ from numpy.linalg import svd
 from PIL import Image
 from scipy import misc
 
+import time
+import numpy as np
+from sklearn import preprocessing
+
 '''
 Method which extracts SVD features from image and returns 's' vector
 @return 's' vector
@@ -11,7 +15,11 @@ Method which extracts SVD features from image and returns 's' vector
 def get_s_model_data(image):
     U, s, V = svd(image, full_matrices=False)
     size = len(s)
-    result = s.reshape([size, 1, 3]) # one shape per canal
+
+    # normalized output
+    output_normalized = preprocessing.normalize(s, norm='l2', axis=1, copy=True, return_norm=False)
+
+    result = output_normalized.reshape([size, 1, 3])
     return result
 
 def get(image):
