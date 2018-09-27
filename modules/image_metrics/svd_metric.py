@@ -17,9 +17,10 @@ def get_s_model_data(image):
     size = len(s)
 
     # normalized output
-    output_normalized = preprocessing.normalize(s, norm='l2', axis=1, copy=True, return_norm=False)
+    output_normalized = preprocessing.normalize(s, norm='l1', axis=0, copy=True, return_norm=False)
 
     result = output_normalized.reshape([size, 1, 3])
+
     return result
 
 def get(image):

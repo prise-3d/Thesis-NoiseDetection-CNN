@@ -65,42 +65,37 @@ def generate_model():
 
     model = Sequential()
 
-    model.add(Conv2D(20, (2, 1), input_shape=input_shape))
+    model.add(Conv2D(30, (2, 1), input_shape=input_shape))
     model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2, 1)))
-
-    '''model.add(Conv2D(80, (2, 1)))
-    model.add(Activation('relu'))
+    model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(2, 1)))
 
     model.add(Conv2D(20, (2, 1)))
     model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2, 1)))'''
+    model.add(MaxPooling2D(pool_size=(2, 1)))
 
-    model.add(Flatten())
-    model.add(Dense(50, kernel_regularizer=l2(0.01)))
+    model.add(Conv2D(10, (2, 1)))
     model.add(Activation('relu'))
-    model.add(BatchNormalization())
-    model.add(Dropout(0.1))
+    model.add(MaxPooling2D(pool_size=(2, 1)))
 
     model.add(Dense(70, kernel_regularizer=l2(0.01)))
-    model.add(Activation('relu'))
     model.add(BatchNormalization())
-    model.add(Dropout(0.2))
-
-    model.add(Dense(100, kernel_regularizer=l2(0.01)))
     model.add(Activation('relu'))
-    model.add(BatchNormalization())
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.3))
 
     model.add(Dense(50, kernel_regularizer=l2(0.01)))
-    model.add(Activation('relu'))
     model.add(BatchNormalization())
-    model.add(Dropout(0.1))
+    model.add(Activation('relu'))
+    model.add(Dropout(0.4))
 
-    model.add(Dense(20, kernel_regularizer=l2(0.01)))
-    model.add(Activation('relu'))
+    model.add(Dense(30, kernel_regularizer=l2(0.01)))
     model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Dropout(0.3))
+
+    model.add(Dense(10, kernel_regularizer=l2(0.01)))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
     model.add(Dropout(0.1))
 
     model.add(Dense(1))
@@ -120,10 +115,10 @@ def load_train_data():
 
     # this is the augmentation configuration we will use for training
     train_datagen = ImageDataGenerator(
-        #rescale=1. / 255,
-        #shear_range=0.2,
-        #zoom_range=0.2,
-        #horizontal_flip=True,
+        rescale=1. / 255,
+        shear_range=0.2,
+        zoom_range=0.2,
+        horizontal_flip=True,
         preprocessing_function=svd_metric.get_s_model_data)
 
     train_generator = train_datagen.flow_from_directory(
@@ -143,7 +138,7 @@ def load_validation_data():
     # this is the augmentation configuration we will use for testing:
     # only rescaling
     test_datagen = ImageDataGenerator(
-        #rescale=1. / 255,
+        rescale=1. / 255,
         preprocessing_function=svd_metric.get_s_model_data)
 
     validation_generator = test_datagen.flow_from_directory(

@@ -71,10 +71,6 @@ def generate_model():
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
 
-    model.add(Conv2D(10, (2, 2)))
-    model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-
     model.add(Flatten())
     model.add(Dense(60))
     model.add(Activation('relu'))
@@ -162,6 +158,7 @@ def main():
             filename = a
         elif o in ("-b", "--batch_size"):
             batch_size = int(a)
+            print(batch_size)
         elif o in ("-e", "--epochs"):
             epochs = int(a)
         elif o in ("-d", "--directory"):
