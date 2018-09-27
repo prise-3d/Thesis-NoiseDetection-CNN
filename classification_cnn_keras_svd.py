@@ -78,6 +78,7 @@ def generate_model():
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 1)))
 
+    model.add(Flatten())
     model.add(Dense(70, kernel_regularizer=l2(0.01)))
     model.add(BatchNormalization())
     model.add(Activation('relu'))
@@ -115,10 +116,10 @@ def load_train_data():
 
     # this is the augmentation configuration we will use for training
     train_datagen = ImageDataGenerator(
-        rescale=1. / 255,
-        shear_range=0.2,
-        zoom_range=0.2,
-        horizontal_flip=True,
+        #rescale=1. / 255,
+        #shear_range=0.2,
+        #zoom_range=0.2,
+        #horizontal_flip=True,
         preprocessing_function=svd_metric.get_s_model_data)
 
     train_generator = train_datagen.flow_from_directory(
@@ -138,7 +139,7 @@ def load_validation_data():
     # this is the augmentation configuration we will use for testing:
     # only rescaling
     test_datagen = ImageDataGenerator(
-        rescale=1. / 255,
+        #rescale=1. / 255,
         preprocessing_function=svd_metric.get_s_model_data)
 
     validation_generator = test_datagen.flow_from_directory(

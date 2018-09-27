@@ -59,6 +59,7 @@ Method which returns model to train
 def generate_model():
 
     model = Sequential()
+
     model.add(Conv2D(60, (2, 2), input_shape=input_shape))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
@@ -68,6 +69,10 @@ def generate_model():
     model.add(MaxPooling2D(pool_size=(2, 2)))
 
     model.add(Conv2D(20, (2, 2)))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+
+    model.add(Conv2D(10, (2, 2)))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
 
