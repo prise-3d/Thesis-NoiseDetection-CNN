@@ -29,7 +29,7 @@ import json
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, AveragePooling2D
-from keras.layers import Activation, Dropout, Flatten, Dense
+from keras.layers import Activation, Dropout, Flatten, Dense, BatchNormalization
 from keras import backend as K
 from keras.utils import plot_model
 
