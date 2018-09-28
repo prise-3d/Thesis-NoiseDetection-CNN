@@ -80,21 +80,30 @@ def generate_model():
 
     model.add(Flatten())
 
-    model.add(Dense(256))
+    model.add(Dense(140))
     model.add(Activation('relu'))
+    model.add(BatchNormalization())
+    model.add(Dropout(0.3))
+
+    model.add(Dense(120))
+    model.add(Activation('relu'))
+    model.add(BatchNormalization())
+    model.add(Dropout(0.3))
+
+    model.add(Dense(80))
+    model.add(Activation('relu'))
+    model.add(BatchNormalization())
     model.add(Dropout(0.2))
 
-    model.add(Dense(128))
+    model.add(Dense(40))
     model.add(Activation('relu'))
+    model.add(BatchNormalization())
     model.add(Dropout(0.2))
 
-    model.add(Dense(64))
+    model.add(Dense(20))
     model.add(Activation('relu'))
+    model.add(BatchNormalization())
     model.add(Dropout(0.2))
-
-    model.add(Dense(32))
-    model.add(Activation('relu'))
-    model.add(Dropout(0.05))
 
     model.add(Dense(1))
     model.add(Activation('sigmoid'))
