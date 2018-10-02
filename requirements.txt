@@ -5,3 +5,4 @@ sklearn
 image_slicer
 pydot
 matplotlib
+path.py

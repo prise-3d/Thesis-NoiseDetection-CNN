@@ -62,7 +62,7 @@ def main():
         sys.exit(2)
     for o, a in opts:
 
-        if o == "-h":
+        if o == "--help":
             print('generate_dataset.py --nb xxxx')
             print('20x20 : 1600')
             print('40x40 : 400')

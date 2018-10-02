@@ -2,11 +2,15 @@
 
 from numpy.linalg import svd
 from PIL import Image
+import matplotlib.pyplot as plt
 from scipy import misc
 
 import time
+
 import numpy as np
 from sklearn import preprocessing
+
+import modules.model_helper.image_conversion as img_c 
 
 '''
 Method which extracts SVD features from image and returns 's' vector
@@ -22,6 +26,26 @@ def get_s_model_data(image):
     result = output_normalized.reshape([size, 1, 3])
 
     return result
+
+def get_s_model_data_img(image):
+    fig_size = plt.rcParams["figure.figsize"]
+    fig_size[0] = 1
+    fig_size[1] = 1
+    plt.rcParams["figure.figsize"] = fig_size
+
+    U, s, V = svd(image, full_matrices=False)
+    
+    plt.figure()   # create a new figure
+      
+    plt.plot(s[:, 0])
+    plt.plot(s[:, 1])
+    plt.plot(s[:, 2])
+
+    img = img_c.fig2img(plt.gcf())
+
+    plt.close('all')
+
+    return img
 
 def get(image):
     return svd(image, full_matrices=False)
