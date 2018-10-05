@@ -41,6 +41,8 @@ import numpy as np
 from modules.model_helper import plot_info
 from modules.image_metrics import svd_metric
 
+import matplotlib.pyplot as plt
+
 # preprocessing of images
 from path import Path
 from PIL import Image
@@ -282,6 +284,11 @@ def main():
             if not os.path.exists(directory):
                 os.makedirs(directory)
             filename = directory + "/" + filename
+
+        fig_size = plt.rcParams["figure.figsize"]
+        fig_size[0] = 9
+        fig_size[1] = 9
+        plt.rcParams["figure.figsize"] = fig_size
 
         # save plot file history
         plot_info.save(history, filename)
