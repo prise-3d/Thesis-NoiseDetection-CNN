@@ -103,7 +103,6 @@ def generate_model():
 
     model.add(Conv2D(50, (2, 2), input_shape=input_shape))
     model.add(Activation('relu'))
-    model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(2, 2)))
 
     model.add(Conv2D(30, (2, 2)))
