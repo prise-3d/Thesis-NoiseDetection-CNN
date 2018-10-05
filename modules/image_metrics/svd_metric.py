@@ -10,7 +10,7 @@ import time
 import numpy as np
 from sklearn import preprocessing
 
-import modules.model_helper.image_conversion as img_c 
+import modules.model_helper.image_conversion as img_c
 
 '''
 Method which extracts SVD features from image and returns 's' vector
@@ -34,12 +34,13 @@ def get_s_model_data_img(image):
     plt.rcParams["figure.figsize"] = fig_size
 
     U, s, V = svd(image, full_matrices=False)
-    
+
     plt.figure()   # create a new figure
-      
-    plt.plot(s[:, 0])
-    plt.plot(s[:, 1])
-    plt.plot(s[:, 2])
+
+    output_normalized = preprocessing.normalize(s, norm='l1', axis=0, copy=True, return_norm=False)
+    plt.plot(output_normalized[70:100, 0])
+    plt.plot(output_normalized[70:100:, 1])
+    plt.plot(output_normalized[70:100:, 2])
 
     img = img_c.fig2img(plt.gcf())
 
