@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Fri Sep 14 21:02:42 2018
@@ -55,13 +55,14 @@ def main():
         print('generate_dataset.py --nb xxxx')
         sys.exit(2)
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hn", ["help", "nb="])
+        opts, args = getopt.getopt(sys.argv[1:], "h:n", ["help", "nb="])
     except getopt.GetoptError:
         # print help information and exit:
         print('generate_dataset.py --nb xxxx')
         sys.exit(2)
     for o, a in opts:
-        if o == "-h":
+
+        if o == "--help":
             print('generate_dataset.py --nb xxxx')
             print('20x20 : 1600')
             print('40x40 : 400')
@@ -69,7 +70,7 @@ def main():
             print('80x80 : 100')
             print('100x100 : 64')
             sys.exit()
-        elif o == '-n':
+        elif o == '--nb':
             NUMBER_SUB_IMAGES = int(a)
 
     init_directory()

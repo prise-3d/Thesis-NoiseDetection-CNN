@@ -29,12 +29,14 @@ import json
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, AveragePooling2D
-from keras.layers import Activation, Dropout, Flatten, Dense
+from keras.layers import Activation, Dropout, Flatten, Dense, BatchNormalization
 from keras import backend as K
 from keras.utils import plot_model
 
-from modules.model_helper import plot_info
+from ipfml import tf_model_helper
 
+# local functions import (metrics preprocessing)
+import preprocessing_functions
 
 ##########################################
 # Global parameters (with default value) #
@@ -59,6 +61,7 @@ Method which returns model to train
 def generate_model():
 
     model = Sequential()
+
     model.add(Conv2D(60, (2, 2), input_shape=input_shape))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
@@ -71,17 +74,31 @@ def generate_model():
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
 
-    model.add(Conv2D(10, (2, 2)))
-    model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-
     model.add(Flatten())
-    model.add(Dense(60))
-    model.add(Activation('relu'))
-    model.add(Dropout(0.4))
 
-    model.add(Dense(30))
+    model.add(Dense(140))
     model.add(Activation('relu'))
+    model.add(BatchNormalization())
+    model.add(Dropout(0.3))
+
+    model.add(Dense(120))
+    model.add(Activation('relu'))
+    model.add(BatchNormalization())
+    model.add(Dropout(0.3))
+
+    model.add(Dense(80))
+    model.add(Activation('relu'))
+    model.add(BatchNormalization())
+    model.add(Dropout(0.2))
+
+    model.add(Dense(40))
+    model.add(Activation('relu'))
+    model.add(BatchNormalization())
+    model.add(Dropout(0.2))
+
+    model.add(Dense(20))
+    model.add(Activation('relu'))
+    model.add(BatchNormalization())
     model.add(Dropout(0.2))
 
     model.add(Dense(1))
@@ -162,6 +179,7 @@ def main():
             filename = a
         elif o in ("-b", "--batch_size"):
             batch_size = int(a)
+            print(batch_size)
         elif o in ("-e", "--epochs"):
             epochs = int(a)
         elif o in ("-d", "--directory"):
@@ -216,7 +234,7 @@ def main():
             filename = directory + "/" + filename
 
         # save plot file history
-        plot_info.save(history, filename)
+        tf_model_helper.save(history, filename)
 
         plot_model(model, to_file=str(('%s.png' % filename)))
         model.save_weights(str('%s.h5' % filename))
