@@ -38,9 +38,6 @@ from keras.utils import plot_model
 import tensorflow as tf
 import numpy as np
 
-from modules.model_helper import plot_info
-from modules.image_metrics import svd_metric
-
 import matplotlib.pyplot as plt
 
 # preprocessing of images
@@ -48,6 +45,9 @@ from path import Path
 from PIL import Image
 import shutil
 import time
+
+# local functions import (metrics preprocessing)
+import preprocessing_functions
 
 ##########################################
 # Global parameters (with default value) #
@@ -87,7 +87,7 @@ def init_directory(img_size, generate_data):
         for f in Path('./data').walkfiles():
             if 'png' in f:
                 img = Image.open(f)
-                new_img = svd_metric.get_s_model_data_img(img)
+                new_img = preprocessing_functions.get_s_model_data_img(img)
                 new_img_path = f.replace('./data', str('./' + svd_data_folder))
                 new_img.save(new_img_path)
                 print(new_img_path)
@@ -140,7 +140,7 @@ def load_train_data():
         #shear_range=0.2,
         #zoom_range=0.2,
         #horizontal_flip=True,
-        #preprocessing_function=svd_metric.get_s_model_data_img
+        #preprocessing_function=preprocessing_functions.get_s_model_data_img
         )
 
     train_generator = train_datagen.flow_from_directory(
@@ -161,7 +161,7 @@ def load_validation_data():
     # only rescaling
     test_datagen = ImageDataGenerator(
         rescale=1. / 255,
-        #preprocessing_function=svd_metric.get_s_model_data_img
+        #preprocessing_function=preprocessing_functions.get_s_model_data_img
         )
 
     validation_generator = test_datagen.flow_from_directory(

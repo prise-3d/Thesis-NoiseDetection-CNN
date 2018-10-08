@@ -38,8 +38,11 @@ from keras.utils import plot_model
 import tensorflow as tf
 import numpy as np
 
-from modules.model_helper import plot_info
-from modules.image_metrics import svd_metric
+from ipfml import tf_model_helper
+from ipfml import metrics
+
+# local functions import
+import preprocessing_functions
 
 ##########################################
 # Global parameters (with default value) #
@@ -125,7 +128,7 @@ def load_train_data():
         #shear_range=0.2,
         #zoom_range=0.2,
         #horizontal_flip=True,
-        preprocessing_function=svd_metric.get_s_model_data)
+        preprocessing_function=preprocessing_functions.get_s_model_data)
 
     train_generator = train_datagen.flow_from_directory(
         train_data_dir,
@@ -145,7 +148,7 @@ def load_validation_data():
     # only rescaling
     test_datagen = ImageDataGenerator(
         #rescale=1. / 255,
-        preprocessing_function=svd_metric.get_s_model_data)
+        preprocessing_function=preprocessing_functions.get_s_model_data)
 
     validation_generator = test_datagen.flow_from_directory(
         validation_data_dir,
@@ -241,7 +244,7 @@ def main():
             filename = directory + "/" + filename
 
         # save plot file history
-        plot_info.save(history, filename)
+        tf_model_helper.save(history, filename)
 
         plot_model(model, to_file=str(('%s.png' % filename)), show_shapes=True)
         model.save_weights(str('%s.h5' % filename))

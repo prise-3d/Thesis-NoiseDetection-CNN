@@ -6,3 +6,4 @@ image_slicer
 pydot
 matplotlib
 path.py
+IPFML

@@ -33,7 +33,10 @@ from keras.layers import Activation, Dropout, Flatten, Dense, BatchNormalization
 from keras import backend as K
 from keras.utils import plot_model
 
-from modules.model_helper import plot_info
+from ipfml import tf_model_helper
+
+# local functions import (metrics preprocessing)
+import preprocessing_functions
 
 ##########################################
 # Global parameters (with default value) #
@@ -224,7 +227,7 @@ def main():
             filename = directory + "/" + filename
 
         # save plot file history
-        plot_info.save(history, filename)
+        tf_model_helper.save(history, filename)
 
         plot_model(model, to_file=str(('%s.png' % filename)))
         model.save_weights(str('%s.h5' % filename))

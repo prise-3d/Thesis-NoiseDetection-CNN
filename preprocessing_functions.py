@@ -1,5 +1,3 @@
-# module file which contains all image metrics used in project
-
 from numpy.linalg import svd
 from PIL import Image
 import matplotlib.pyplot as plt
@@ -9,15 +7,11 @@ import time
 
 import numpy as np
 from sklearn import preprocessing
+import ipfml as iml
 
-import modules.model_helper.image_conversion as img_c
-
-'''
-Method which extracts SVD features from image and returns 's' vector
-@return 's' vector
-'''
 def get_s_model_data(image):
-    U, s, V = svd(image, full_matrices=False)
+
+    s = iml.metrics.get_SVD_s(image)
     size = len(s)
 
     # normalized output
@@ -27,13 +21,13 @@ def get_s_model_data(image):
 
     return result
 
-def get_s_model_data_img(image):
+def get_s_model_data_img(image, ):
     fig_size = plt.rcParams["figure.figsize"]
     fig_size[0] = 1
     fig_size[1] = 1
     plt.rcParams["figure.figsize"] = fig_size
 
-    U, s, V = svd(image, full_matrices=False)
+    s = iml.metrics.get_SVD_s(image)
 
     plt.figure()   # create a new figure
 
@@ -42,23 +36,8 @@ def get_s_model_data_img(image):
     plt.plot(output_normalized[70:100:, 1])
     plt.plot(output_normalized[70:100:, 2])
 
-    img = img_c.fig2img(plt.gcf())
+    img = iml.image_processing.fig2img(plt.gcf())
 
     plt.close('all')
 
     return img
-
-def get(image):
-    return svd(image, full_matrices=False)
-
-def get_s(image):
-    U, s, V = svd(image, full_matrices=False)
-    return s
-
-def get_U(image):
-    U, s, V = svd(image, full_matrices=False)
-    return U
-
-def get_V(image):
-    U, s, V = svd(image, full_matrices=False)
-    return V
