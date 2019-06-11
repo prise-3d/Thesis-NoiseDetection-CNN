@@ -33,7 +33,6 @@ from keras.layers import Activation, Dropout, Flatten, Dense, BatchNormalization
 from keras import backend as K
 from keras.utils import plot_model
 
-from ipfml import tf_model_helper
 
 # local functions import (metrics preprocessing)
 import preprocessing_functions
@@ -61,15 +60,15 @@ Method which returns model to train
 def generate_model():
     # create your model using this function
     model = Sequential()
-    model.add(Conv2D(60, (2, 2), input_shape=input_shape))
+    model.add(Conv2D(60, (2, 2), input_shape=input_shape, dilation_rate=1))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
 
-    model.add(Conv2D(40, (2, 2)))
+    model.add(Conv2D(40, (2, 2), dilation_rate=1))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
 
-    model.add(Conv2D(20, (2, 2)))
+    model.add(Conv2D(20, (2, 2), dilation_rate=1))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
 
@@ -104,7 +103,7 @@ def generate_model():
     model.add(Activation('sigmoid'))
 
     model.compile(loss='binary_crossentropy',
-                  optimizer='rmsprop',
+                  optimizer='adam',
                   metrics=['accuracy'])
 
     return model
@@ -140,14 +139,14 @@ def main():
 
     # update global variable and not local
     global batch_size
-    global epochs   
+    global epochs
     global img_width
     global img_height
     global input_shape
     global train_data_dir
     global validation_data_dir
     global nb_train_samples
-    global nb_validation_samples 
+    global nb_validation_samples
 
     if len(sys.argv) <= 1:
         print('Run with default parameters...')
@@ -227,7 +226,7 @@ def main():
             filename = directory + "/" + filename
 
         # save plot file history
-        tf_model_helper.save(history, filename)
+        # tf_model_helper.save(history, filename)
 
         plot_model(model, to_file=str(('%s.png' % filename)))
         model.save_weights(str('%s.h5' % filename))

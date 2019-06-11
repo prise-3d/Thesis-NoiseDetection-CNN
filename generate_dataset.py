@@ -30,7 +30,6 @@ def init_directory():
 
         os.makedirs('data/validation/final')
         os.makedirs('data/validation/noisy')
-       
 
 def create_images(folder, output_folder):
     images_path = glob.glob(folder + "/*.png")
