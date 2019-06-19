@@ -2,9 +2,14 @@
 data
 .python-version
 __pycache__
+.vscode
 
 # by default avoid model files and png files
 *.h5
 *.png
 !saved_models/*.h5
 !saved_models/*.png
+
+# data
+learned_zones
+dataset
