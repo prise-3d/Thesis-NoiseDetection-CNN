@@ -110,7 +110,10 @@ def generate_data_model(_scenes_list, _filename, _interval,  _metric, _scenes, _
                 for img in images:
                     img_path = os.path.join(label_path, img)
 
-                    line = label + ';' + img_path + '\n'
+                    if label == cfg.noisy_folder:
+                        line = '1;' + img_path + '\n'
+                    else:
+                        line = '0;' + img_path + '\n'
 
                     if id_zone < _nb_zones and folder_scene in _scenes:
                         train_file_data.append(line)
