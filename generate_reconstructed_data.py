@@ -87,7 +87,7 @@ def generate_data(transformation):
                 os.makedirs(metric_path)
 
             # custom path for interval of reconstruction and metric
-            metric_interval_path = transformation.getTransformationPath()
+            metric_interval_path = os.path.join(zone_path, transformation.getTransformationPath())
             metrics_folder.append(metric_interval_path)
 
             if not os.path.exists(metric_interval_path):
@@ -139,17 +139,26 @@ def generate_data(transformation):
                 else:
                     label_path = os.path.join(label_path, cfg.noisy_folder)
 
+                # Data augmentation!
                 rotations = [0, 90, 180, 270]
+                img_flip_labels = ['original', 'horizontal', 'vertical', 'both']
 
-                # rotate image to increase dataset size
-                for rotation in rotations:
-                    rotated_output_img = output_block_img.rotate(rotation)
+                horizontal_img = output_block_img.transpose(Image.FLIP_LEFT_RIGHT)
+                vertical_img = output_block_img.transpose(Image.FLIP_TOP_BOTTOM)
+                both_img = output_block_img.transpose(Image.TRANSPOSE)
 
-                    output_reconstructed_filename = img_path.split('/')[-1].replace('.png', '') + '_' + zones_folder[id_block]
-                    output_reconstructed_filename = output_reconstructed_filename + '_' + str(rotation) + '.png'
-                    output_reconstructed_path = os.path.join(label_path, output_reconstructed_filename)
+                flip_images = [output_block_img, horizontal_img, vertical_img, both_img]
 
-                    rotated_output_img.save(output_reconstructed_path)
+                # rotate and flip image to increase dataset size
+                for id, flip in enumerate(flip_images):
+                    for rotation in rotations:
+                        rotated_output_img = flip.rotate(rotation)
+
+                        output_reconstructed_filename = img_path.split('/')[-1].replace('.png', '') + '_' + zones_folder[id_block]
+                        output_reconstructed_filename = output_reconstructed_filename + '_' + img_flip_labels[id] + '_' + str(rotation) + '.png'
+                        output_reconstructed_path = os.path.join(label_path, output_reconstructed_filename)
+
+                        rotated_output_img.save(output_reconstructed_path)
 
 
             start_index_image_int = int(start_index_image)

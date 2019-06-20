@@ -42,7 +42,7 @@ for begin in {80,85,90,95,100,105,110}; do
 
         python generate_dataset.py --output data/${OUTPUT_DATA_FILE} --metric ${svd_metric} --renderer ${renderer} --scenes ${scenes} --param "${begin}, ${end}" --nb_zones ${zone} --random 1
         
-        python train_model_2D.py --data data/${OUTPUT_DATA_FILE} --output ${OUTPUT_DATA_FILE}
+        python train_model_2D.py --data data/${OUTPUT_DATA_FILE} --output ${OUTPUT_DATA_FILE} &
       fi
     done
   done
@@ -68,7 +68,7 @@ for component in {50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200}; d
 
       python generate_dataset.py --output data/${OUTPUT_DATA_FILE} --metric ${ipca_metric} --renderer ${renderer} --scenes ${scenes} --param "${component},${ipca_batch_size}" --nb_zones ${zone} --random 1
       
-      python train_model_2D.py --data data/${OUTPUT_DATA_FILE} --output ${OUTPUT_DATA_FILE}
+      python train_model_2D.py --data data/${OUTPUT_DATA_FILE} --output ${OUTPUT_DATA_FILE} &
     fi
   done
 done
@@ -92,7 +92,7 @@ for component in {50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200}; d
 
       python generate_dataset.py --output data/${OUTPUT_DATA_FILE} --metric ${fast_ica_metric} --renderer ${renderer} --scenes ${scenes} --param "${component}" --nb_zones ${zone} --random 1
       
-      python train_model_2D.py --data data/${OUTPUT_DATA_FILE} --output ${OUTPUT_DATA_FILE}
+      python train_model_2D.py --data data/${OUTPUT_DATA_FILE} --output ${OUTPUT_DATA_FILE} &
     fi
   done
 done
