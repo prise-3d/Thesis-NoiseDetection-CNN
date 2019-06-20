@@ -12,10 +12,12 @@ from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, AveragePooling2D
 from keras.layers import Activation, Dropout, Flatten, Dense, BatchNormalization
 from keras import backend as K
+import tensorflow as tf
+
 from keras.utils import plot_model
 
 from modules.utils import config as cfg
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, accuracy_score, precision_score, recall_score, f1_score
 
 img_width, img_height = 200, 200
 batch_size = 32
@@ -26,6 +28,11 @@ if K.image_data_format() == 'channels_first':
 else:
     input_shape = (img_width, img_height, 1)
 
+def auc(y_true, y_pred):
+    auc = tf.metrics.auc(y_true, y_pred)[1]
+    K.get_session().run(tf.local_variables_initializer())
+    #K.get_session().run(tf.local_variables_initializer())
+    return auc
 
 def generate_model(_input_shape):
 
@@ -74,8 +81,8 @@ def generate_model(_input_shape):
     model.add(Activation('sigmoid'))
 
     model.compile(loss='binary_crossentropy',
-                  optimizer='rmsprop',
-                  metrics=['accuracy'])
+                  optimizer='adam',
+                  metrics=['accuracy', auc])
 
     return model
 
@@ -84,13 +91,19 @@ def main():
 
     parser = argparse.ArgumentParser(description="Train Keras model and save it into .json file")
 
-    parser.add_argument('--data', type=str, help='dataset filename prefix (without .train and .test)')
-    parser.add_argument('--output', type=str, help='output file name desired for model (without .json extension)')
+    parser.add_argument('--data', type=str, help='dataset filename prefix (without .train and .test)', required=True)
+    parser.add_argument('--output', type=str, help='output file name desired for model (without .json extension)', required=True)
+    parser.add_argument('--batch_size', type=int, help='batch size used as model input', default=cfg.keras_batch)
+    parser.add_argument('--epochs', type=int, help='number of epochs used for training model', default=cfg.keras_epochs)
+    parser.add_argument('--val_size', type=int, help='percent of validation data during training process', default=cfg.val_dataset_size)
 
     args = parser.parse_args()
 
-    p_data_file = args.data
-    p_output    = args.output
+    p_data_file  = args.data
+    p_output     = args.output
+    p_batch_size = args.batch_size
+    p_epochs     = args.epochs
+    p_val_size   = args.val_size
 
     ########################
     # 1. Get and prepare data
@@ -140,10 +153,16 @@ def main():
         x_data_train.append(item[0])
 
     x_data_train = np.array(x_data_train)
-    print("End of loading data..")
 
-    print(x_data_train.shape)
-    print(x_data_train[0])
+    x_data_test = []
+    for item in x_dataset_test.values:
+        #print("Item is here", item)
+        x_data_test.append(item[0])
+
+    x_data_test = np.array(x_data_test)
+
+
+    print("End of loading data..")
 
     #######################
     # 2. Getting model
@@ -152,9 +171,9 @@ def main():
     model = generate_model(input_shape)
     model.summary()
 
-    model.fit(x_data_train, y_dataset_train.values, validation_split=0.20, epochs=cfg.keras_epochs, batch_size=cfg.keras_batch)
+    model.fit(x_data_train, y_dataset_train.values, validation_split=p_val_size, epochs=p_epochs, batch_size=p_batch_size)
 
-    score = model.evaluate(x_dataset_test, y_dataset_test, batch_size=cfg.keras_batch)
+    score = model.evaluate(x_data_test, y_dataset_test, batch_size=p_batch_size)
 
     if not os.path.exists(cfg.saved_models_folder):
         os.makedirs(cfg.saved_models_folder)
@@ -169,11 +188,38 @@ def main():
 
     model.save_weights(model_output_path.replace('.json', '.h5'))
 
-    # Save results obtained from model
-    y_test_prediction = model.predict(x_dataset_test)
-    print("Metrics : ", model.metrics_names)
-    print("Prediction : ", score)
-    print("ROC AUC : ", roc_auc_score(y_dataset_test, y_test_prediction))
+    # Get results obtained from model
+    y_train_prediction = model.predict(x_data_test)
+    y_test_prediction = model.predict(x_data_test)
+
+    acc_train_score = accuracy_score(y_dataset_train, y_train_prediction)
+    acc_test_score = accuracy_score(y_dataset_test, y_test_prediction)
+
+    f1_train_score = f1_score(y_dataset_train, y_train_prediction)
+    f1_test_score = f1_score(y_dataset_test, y_test_prediction)
+
+    recall_train_score = recall_score(y_dataset_train, y_train_prediction)
+    recall_test_score = recall_score(y_dataset_test, y_test_prediction)
+
+    pres_train_score = precision_score(y_dataset_train, y_train_prediction)
+    pres_test_score = precision_score(y_dataset_test, y_test_prediction)
+
+    roc_train_score = roc_auc_score(y_dataset_test, y_train_prediction)
+    roc_test_score = roc_auc_score(y_dataset_test, y_test_prediction)
+
+    # save model performance
+    if not os.path.exists(cfg.models_information_folder):
+        os.makedirs(cfg.models_information_folder)
+
+    perf_file_path = os.path.join(cfg.models_information_folder, cfg.csv_model_comparisons_filename)
+
+    with open(perf_file_path, 'a') as f:
+        line = p_output + ';' + len(dataset_train) + ';' + len(dataset_test) + ';' + final_df_train_size + ';' + final_df_test_size + ';' + acc_train_score + ';' + acc_test_score + ';' \
+                        + f1_train_score + ';' + f1_test_score + ';' \
+                        + recall_train_score + ';' + recall_test_score + ';' \
+                        + pres_train_score + ';' + pres_test_score + ';' \
+                        + roc_train_score + ';' + roc_test_score + '\n'
+        f.write(line)
 
 if __name__== "__main__":
     main()

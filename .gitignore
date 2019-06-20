@@ -7,6 +7,7 @@ __pycache__
 # by default avoid model files and png files
 *.h5
 *.png
+saved_models
 !saved_models/*.h5
 !saved_models/*.png
 

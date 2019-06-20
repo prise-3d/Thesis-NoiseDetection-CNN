@@ -40,5 +40,6 @@ zones_indices                   = np.arange(16)
 
 metric_choices_labels           = ['all', 'svd_reconstruction']
 
-keras_epochs                    = 500
+keras_epochs                    = 100
 keras_batch                     = 32
+val_dataset_size                = 0.2
