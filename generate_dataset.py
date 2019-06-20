@@ -19,7 +19,8 @@ from skimage import color
 from modules.utils import config as cfg
 from modules.utils import data as dt
 
-from preprocessing_functions import svd_reconstruction
+from transformation_functions import svd_reconstruction
+from modules.classes.Transformation import Transformation
 
 # getting configuration information
 config_filename         = cfg.config_filename
@@ -40,7 +41,7 @@ output_data_folder      = cfg.output_data_folder
 
 generic_output_file_svd = '_random.csv'
 
-def generate_data_model(_scenes_list, _filename, _interval,  _metric, _scenes, _nb_zones = 4, _random=0):
+def generate_data_model(_scenes_list, _filename, _transformation, _scenes, _nb_zones = 4, _random=0):
 
     output_train_filename = _filename + ".train"
     output_test_filename = _filename + ".test"
@@ -58,7 +59,6 @@ def generate_data_model(_scenes_list, _filename, _interval,  _metric, _scenes, _
     scenes = os.listdir(path)
     # remove min max file from scenes folder
     scenes = [s for s in scenes if min_max_filename not in s]
-    begin, end = _interval
 
     # go ahead each scenes
     for id_scene, folder_scene in enumerate(_scenes_list):
@@ -96,16 +96,13 @@ def generate_data_model(_scenes_list, _filename, _interval,  _metric, _scenes, _
             current_zone_folder = "zone" + index_str
             zone_path = os.path.join(scene_path, current_zone_folder)
 
-            # custom path for metric
-            metric_path = os.path.join(zone_path, _metric)
-
             # custom path for interval of reconstruction and metric
-            metric_interval_path = os.path.join(metric_path, str(begin) + "_" + str(end))
+            metric_interval_path = os.path.join(zone_path, _transformation.getTranformationPath())
 
             for label in os.listdir(metric_interval_path):
                 label_path = os.path.join(metric_interval_path, label)
 
-                images = os.listdir(label_path)
+                images = sorted(os.listdir(label_path))
 
                 for img in images:
                     img_path = os.path.join(label_path, img)
@@ -144,7 +141,7 @@ def main():
                                     help="metric choice in order to compute data (use 'all' if all metrics are needed)", 
                                     choices=metric_choices,
                                     required=True)
-    parser.add_argument('--interval', type=str, help="interval choice if needed by the compression method", default='"100, 200"')
+    parser.add_argument('--param', type=str, help="specific param for metric (See README.md for further information)")
     parser.add_argument('--scenes', type=str, help='List of scenes to use for training data')
     parser.add_argument('--nb_zones', type=int, help='Number of zones to use for training data set', choices=list(range(1, 17)))
     parser.add_argument('--renderer', type=str, help='Renderer choice in order to limit scenes used', choices=cfg.renderer_choices, default='all')
@@ -154,13 +151,16 @@ def main():
 
     p_filename = args.output
     p_metric   = args.metric
-    p_interval = list(map(int, args.interval.split(',')))
+    p_param    = args.param
     p_scenes   = args.scenes.split(',')
     p_nb_zones = args.nb_zones
     p_renderer = args.renderer
     p_random   = args.random
 
-        # list all possibles choices of renderer
+    # create new Transformation obj
+    transformation = Transformation(p_metric, p_param)
+
+    # list all possibles choices of renderer
     scenes_list = dt.get_renderer_scenes_names(p_renderer)
     scenes_indices = dt.get_renderer_scenes_indices(p_renderer)
 
@@ -172,8 +172,7 @@ def main():
         scenes_selected.append(scenes_list[index])
 
     # create database using img folder (generate first time only)
-    generate_data_model(scenes_list, p_filename, p_interval,  p_metric, scenes_selected, p_nb_zones, p_random)
-
+    generate_data_model(scenes_list, p_filename, transformation, scenes_selected, p_nb_zones, p_random)
 
 if __name__== "__main__":
     main()

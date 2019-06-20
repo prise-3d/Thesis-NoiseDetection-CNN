@@ -81,7 +81,7 @@ def generate_model(_input_shape):
     model.add(Activation('sigmoid'))
 
     model.compile(loss='binary_crossentropy',
-                  optimizer='adam',
+                  optimizer='rmsprop',
                   metrics=['accuracy', auc])
 
     return model
@@ -111,6 +111,9 @@ def main():
     print("Preparing data...")
     dataset_train = pd.read_csv(p_data_file + '.train', header=None, sep=";")
     dataset_test = pd.read_csv(p_data_file + '.test', header=None, sep=";")
+
+    print("Train set size : ", len(dataset_train))
+    print("Test set size : ", len(dataset_test))
 
     # default first shuffle of data
     dataset_train = shuffle(dataset_train)
@@ -164,13 +167,16 @@ def main():
 
     print("End of loading data..")
 
+    print("Train set size (after balancing) : ", final_df_train_size)
+    print("Test set size (after balancing) : ", final_df_test_size)
+
     #######################
     # 2. Getting model
     #######################
 
     model = generate_model(input_shape)
     model.summary()
-
+ 
     model.fit(x_data_train, y_dataset_train.values, validation_split=p_val_size, epochs=p_epochs, batch_size=p_batch_size)
 
     score = model.evaluate(x_data_test, y_dataset_test, batch_size=p_batch_size)
@@ -189,8 +195,11 @@ def main():
     model.save_weights(model_output_path.replace('.json', '.h5'))
 
     # Get results obtained from model
-    y_train_prediction = model.predict(x_data_test)
+    y_train_prediction = model.predict(x_data_train)
     y_test_prediction = model.predict(x_data_test)
+
+    y_train_prediction = [1 if x > 0.5 else 0 for x in y_train_prediction]
+    y_test_prediction = [1 if x > 0.5 else 0 for x in y_test_prediction]
 
     acc_train_score = accuracy_score(y_dataset_train, y_train_prediction)
     acc_test_score = accuracy_score(y_dataset_test, y_test_prediction)
@@ -204,7 +213,7 @@ def main():
     pres_train_score = precision_score(y_dataset_train, y_train_prediction)
     pres_test_score = precision_score(y_dataset_test, y_test_prediction)
 
-    roc_train_score = roc_auc_score(y_dataset_test, y_train_prediction)
+    roc_train_score = roc_auc_score(y_dataset_train, y_train_prediction)
     roc_test_score = roc_auc_score(y_dataset_test, y_test_prediction)
 
     # save model performance
@@ -214,11 +223,13 @@ def main():
     perf_file_path = os.path.join(cfg.models_information_folder, cfg.csv_model_comparisons_filename)
 
     with open(perf_file_path, 'a') as f:
-        line = p_output + ';' + len(dataset_train) + ';' + len(dataset_test) + ';' + final_df_train_size + ';' + final_df_test_size + ';' + acc_train_score + ';' + acc_test_score + ';' \
-                        + f1_train_score + ';' + f1_test_score + ';' \
-                        + recall_train_score + ';' + recall_test_score + ';' \
-                        + pres_train_score + ';' + pres_test_score + ';' \
-                        + roc_train_score + ';' + roc_test_score + '\n'
+        line = p_output + ';' + str(len(dataset_train)) + ';' + str(len(dataset_test)) + ';' \
+                        + str(final_df_train_size) + ';' + str(final_df_test_size) + ';' \
+                        + str(acc_train_score) + ';' + str(acc_test_score) + ';' \
+                        + str(f1_train_score) + ';' + str(f1_test_score) + ';' \
+                        + str(recall_train_score) + ';' + str(recall_test_score) + ';' \
+                        + str(pres_train_score) + ';' + str(pres_test_score) + ';' \
+                        + str(roc_train_score) + ';' + str(roc_test_score) + '\n'
         f.write(line)
 
 if __name__== "__main__":

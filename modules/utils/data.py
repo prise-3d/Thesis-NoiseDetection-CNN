@@ -1,6 +1,6 @@
 from ipfml import processing, metrics, utils
 from modules.utils.config import *
-from preprocessing_functions import svd_reconstruction
+from transformation_functions import svd_reconstruction
 
 from PIL import Image
 from skimage import color
@@ -21,17 +21,6 @@ _scenes_indices_prefix = '_scenes_indices'
 # store all variables from current module context
 context_vars = vars()
 
-
-def get_data(data_type, block, interval=(100, 200)):
-    """
-    Method which returns the data type expected
-    """
-
-    if data_type == 'svd_reconstruct':
-        begin, end = interval
-        data = svd_reconstruction(block, [begin, end])
-
-    return data
 
 def get_renderer_scenes_indices(renderer_name):
 
