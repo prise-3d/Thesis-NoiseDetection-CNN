@@ -19,13 +19,13 @@ from keras.utils import plot_model
 from modules.utils import config as cfg
 from sklearn.metrics import roc_auc_score, accuracy_score, precision_score, recall_score, f1_score
 
-img_width, img_height = 200, 200
+img_width, img_height = cfg.keras_img_size
 batch_size = 32
 
 def auc(y_true, y_pred):
     auc = tf.metrics.auc(y_true, y_pred)[1]
     K.get_session().run(tf.local_variables_initializer())
-    #K.get_session().run(tf.local_variables_initializer())
+    
     return auc
 
 def generate_model(_input_shape):
@@ -100,12 +100,6 @@ def main():
     p_epochs     = args.epochs
     p_val_size   = args.val_size
     p_n_channels = args.n_channels
-
-    # specify the number of dimensions
-    if K.image_data_format() == 'channels_first':
-        input_shape = (p_n_channels, img_width, img_height)
-    else:
-        input_shape = (img_width, img_height, p_n_channels)
         
     ########################
     # 1. Get and prepare data
@@ -122,6 +116,9 @@ def main():
     dataset_test = shuffle(dataset_test)
 
     print("Reading all images data...")
+
+    # getting number of chanel
+    n_channels = len(dataset_train[1].split(':'))
 
     # `:` is the separator used for getting each img path
     if p_n_channels > 1:
@@ -180,6 +177,12 @@ def main():
     #######################
     # 2. Getting model
     #######################
+
+        # specify the number of dimensions
+    if K.image_data_format() == 'channels_first':
+        input_shape = (n_channels, img_width, img_height)
+    else:
+        input_shape = (img_width, img_height, n_channels)
 
     model = generate_model(input_shape)
     model.summary()

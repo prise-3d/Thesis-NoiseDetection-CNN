@@ -43,3 +43,5 @@ metric_choices_labels           = ['all', 'svd_reconstruction', 'fast_ica_recons
 keras_epochs                    = 50
 keras_batch                     = 32
 val_dataset_size                = 0.2
+
+keras_img_size                  = (200, 200)

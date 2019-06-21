@@ -32,7 +32,7 @@ min_max_filename        = cfg.min_max_filename_extension
 scenes_list             = cfg.scenes_names
 scenes_indexes          = cfg.scenes_indices
 choices                 = cfg.normalization_choices
-path                    = cfg.dataset_path
+dataset_path            = cfg.dataset_path
 zones                   = cfg.zones_indices
 seuil_expe_filename     = cfg.seuil_expe_filename
 
@@ -56,14 +56,14 @@ def generate_data_model(_scenes_list, _filename, _transformations, _scenes, _nb_
     train_file_data = []
     test_file_data  = []
 
-    scenes = os.listdir(path)
+    scenes = os.listdir(dataset_path)
     # remove min max file from scenes folder
     scenes = [s for s in scenes if min_max_filename not in s]
 
     # go ahead each scenes
     for id_scene, folder_scene in enumerate(_scenes_list):
 
-        scene_path = os.path.join(path, folder_scene)
+        scene_path = os.path.join(dataset_path, folder_scene)
 
         zones_indices = zones
 
@@ -185,8 +185,8 @@ def main():
     args = parser.parse_args()
 
     p_filename = args.output
-    p_metrics  = args.metrics.split(',')
-    p_params   = args.params.split('::')
+    p_metrics  = list(map(str.strip, args.metrics.split(',')))
+    p_params   = list(map(str.strip, args.params.split('::')))
     p_scenes   = args.scenes.split(',')
     p_nb_zones = args.nb_zones
     p_renderer = args.renderer

@@ -34,23 +34,25 @@ def main():
 
     p_custom = False
         
-    parser = argparse.ArgumentParser(description="Script which predicts threshold using specific model")
+    parser = argparse.ArgumentParser(description="Script which predicts threshold using specific keras model")
 
-    parser.add_argument('--interval', type=str, help='Interval value to keep from svd', default='"0, 200"')
-    parser.add_argument('--model', type=str, help='.joblib or .json file (sklearn or keras model)')
-    parser.add_argument('--mode', type=str, help='Kind of normalization level wished', choices=normalization_choices)
-    parser.add_argument('--metric', type=str, help='Metric data choice', choices=metric_choices)
-    #parser.add_argument('--limit_detection', type=int, help='Specify number of same prediction to stop threshold prediction', default=2)
-    parser.add_argument('--custom', type=str, help='Name of custom min max file if use of renormalization of data', default=False)
+    parser.add_argument('--metrics', type=str, 
+                                     help="list of metrics choice in order to compute data",
+                                     default='svd_reconstruction, ipca_reconstruction',
+                                     required=True)
+    parser.add_argument('--params', type=str, 
+                                    help="list of specific param for each metric choice (See README.md for further information in 3D mode)", 
+                                    default='100, 200 :: 50, 25',
+                                    required=True)
+    parser.add_argument('--model', type=str, help='.json file of keras model')
 
     args = parser.parse_args()
 
-    p_interval   = list(map(int, args.interval.split(',')))
+    p_metrics    = list(map(str.strip, args.metrics.split(',')))
+    p_params     = list(map(str.strip, args.params.split('::')))
     p_model_file = args.model
-    p_mode       = args.mode
-    p_metric     = args.metric
-    #p_limit      = args.limit
-    p_custom     = args.custom
+
+    args = parser.parse_args()
 
     scenes = os.listdir(scenes_path)
     scenes = [s for s in scenes if s in maxwell_scenes]
@@ -113,25 +115,20 @@ def main():
                 img_path = os.path.join(scene_path, prefix_image_name + current_counter_index_str + ".png")
 
                 current_img = Image.open(img_path)
-                img_blocks = processing.divide_in_blocks(current_img, (200, 200))
+                img_blocks = processing.divide_in_blocks(current_img, cfg.keras_img_size)
 
                 for id_block, block in enumerate(img_blocks):
 
                     # check only if necessary for this scene (not already detected)
                     #if not threshold_expes_detected[id_block]:
 
-                        tmp_file_path = tmp_filename.replace('__model__',  p_model_file.split('/')[-1].replace('.joblib', '_'))
+                        tmp_file_path = tmp_filename.replace('__model__',  p_model_file.split('/')[-1].replace('.json', '_'))
                         block.save(tmp_file_path)
 
-                        python_cmd = "python predict_noisy_image_svd.py --image " + tmp_file_path + \
-                                        " --interval '" + p_interval + \
-                                        "' --model " + p_model_file  + \
-                                        " --mode " + p_mode + \
-                                        " --metric " + p_metric
-
-                        # specify use of custom file for min max normalization
-                        if p_custom:
-                            python_cmd = python_cmd + ' --custom ' + p_custom
+                        python_cmd = "python predict_noisy_image.py --image " + tmp_file_path + \
+                                        " --metrics " + p_metrics + \
+                                        " --params " + p_params + \
+                                        " --model " + p_model_file 
 
                         ## call command ##
                         p = subprocess.Popen(python_cmd, stdout=subprocess.PIPE, shell=True)
@@ -173,7 +170,7 @@ def main():
             print("------------------------")
 
             print("Model predictions are saved into %s" % map_filename)
-            time.sleep(10)
+            time.sleep(2)
 
 
 if __name__== "__main__":

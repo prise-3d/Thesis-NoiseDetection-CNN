@@ -26,10 +26,15 @@ List of expected parameter by reconstruction method:
   - Example: *"100, 200"*
 - **ipca_reconstruction:** Iterative Principal Component Analysis
   - Param definition: *number of components used for compression and batch size*
-  - Example: *"50, 32"*
+  - Example: *"30, 35"*
 - **fast_ica_reconstruction:**  Fast Iterative Component Analysis
   - Param definition: *number of components used for compression*
   - Example: *"50"*
+
+**__Example:__**
+```bash
+python generate_dataset_3D.py --output data/output_data_filename --metrics "svd_reconstruction, ipca_reconstruction, fast_ica_reconstruction" --renderer "maxwell" --scenes "A, D, G, H" --params "100, 200 :: 50, 10 :: 50" --nb_zones 10 --random 1
+```
 
 ## Modules
 

@@ -118,13 +118,17 @@ def generate_data(transformation):
             img_path = os.path.join(scene_path, prefix_image_name + current_counter_index_str + ".png")
 
             current_img = Image.open(img_path)
-            img_blocks = processing.divide_in_blocks(current_img, (200, 200))
+            img_blocks = processing.divide_in_blocks(current_img, cfg.keras_img_size)
 
             for id_block, block in enumerate(img_blocks):
 
                 ##########################
                 # Image computation part #
                 ##########################
+                
+                # pass block to grey level
+
+
                 output_block = transformation.getTransformedImage(block)
                 output_block = np.array(output_block, 'uint8')
                 
@@ -177,22 +181,32 @@ def main():
 
     parser = argparse.ArgumentParser(description="Compute and prepare data of metric of all scenes using specific interval if necessary")
 
-    parser.add_argument('--metric', type=str, 
-                                    help="metric choice in order to compute data", 
-                                    choices=metric_choices,
+    parser.add_argument('--metrics', type=str, 
+                                     help="list of metrics choice in order to compute data",
+                                     default='svd_reconstruction, ipca_reconstruction',
+                                     required=True)
+    parser.add_argument('--params', type=str, 
+                                    help="list of specific param for each metric choice (See README.md for further information in 3D mode)", 
+                                    default='100, 200 :: 50, 25',
                                     required=True)
-
-    parser.add_argument('--param', type=str, help="specific param for metric (See README.md for further information)")
 
     args = parser.parse_args()
 
-    p_metric   = args.metric
-    p_param    = args.param
+    p_metrics  = list(map(str.strip, args.metrics.split(',')))
+    p_params   = list(map(str.strip, args.params.split('::')))
 
-    transformation = Transformation(p_metric, p_param)
+    transformations = []
+
+    for id, metric in enumerate(p_metrics):
+
+        if metric not in metric_choices:
+            raise ValueError("Unknown metric, please select a correct metric : ", metric_choices)
+
+        transformations.append(Transformation(metric, p_params[id]))
 
     # generate all or specific metric data
-    generate_data(transformation)
+    for transformation in transformations:
+        generate_data(transformation)
 
 if __name__== "__main__":
     main()
