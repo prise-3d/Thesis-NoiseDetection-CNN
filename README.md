@@ -18,24 +18,38 @@ Generate custom dataset from one reconstructed method or multiples (implemented 
 python generate_dataset.py -h
 ```
 
-### Reconstruction parameter
+### Reconstruction parameter (--params)
 
 List of expected parameter by reconstruction method:
-- **svd:** Singular Values Decomposition
+- **svd_reconstruction:** Singular Values Decomposition
   - Param definition: *interval data used for reconstruction (begin, end)*
   - Example: *"100, 200"*
-- **ipca:** Iterative Principal Component Analysis
+- **ipca_reconstruction:** Iterative Principal Component Analysis
   - Param definition: *number of components used for compression and batch size*
-  - Example: *"50, 32"*
-- **fast_ica:**  Fast Iterative Component Analysis
+  - Example: *"30, 35"*
+- **fast_ica_reconstruction:**  Fast Iterative Component Analysis
   - Param definition: *number of components used for compression*
   - Example: *"50"*
+
+**__Example:__**
+```bash
+python generate_dataset.py --output data/output_data_filename --metrics "svd_reconstruction, ipca_reconstruction, fast_ica_reconstruction" --renderer "maxwell" --scenes "A, D, G, H" --params "100, 200 :: 50, 10 :: 50" --nb_zones 10 --random 1
+```
+
+
+Then, train model using your custom dataset:
+```bash
+python train_model --data data/custom_dataset --output output_model_name
+```
 
 ## Modules
 
 This project contains modules:
 - **modules/utils/config.py**: *Store all configuration information about the project and dataset information*
 - **modules/utils/data.py**: *Usefull methods used for dataset*
+- **modules/models/metrics.py**: *Usefull methods for performance comparisons*
+- **modules/models/models.py**: *Generation of CNN model*
+- **modules/classes/Transformation.py**: *Transformation class for more easily manage computation*
 
 All these modules will be enhanced during development of the project
 

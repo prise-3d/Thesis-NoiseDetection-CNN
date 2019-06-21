@@ -23,11 +23,14 @@ def svd_reconstruction(img, interval):
 
 def fast_ica_reconstruction(img, components):
 
+    lab_img = metrics.get_LAB_L(img)
+    lab_img = np.array(lab_img, 'uint8')
+
     ica = FastICA(n_components = 50)
     # run ICA on image
-    ica.fit(img)
+    ica.fit(lab_img)
     # reconstruct image with independent components
-    image_ica = ica.fit_transform(img)
+    image_ica = ica.fit_transform(lab_img)
     restored_image = ica.inverse_transform(image_ica)
 
     return restored_image
@@ -35,9 +38,12 @@ def fast_ica_reconstruction(img, components):
 
 def ipca_reconstruction(img, components, _batch_size=25):
 
+    lab_img = metrics.get_LAB_L(img)
+    lab_img = np.array(lab_img, 'uint8')
+
     transformer = IncrementalPCA(n_components=components, batch_size=_batch_size)
 
-    transformed_image = transformer.fit_transform(img) 
+    transformed_image = transformer.fit_transform(lab_img) 
     restored_image = transformer.inverse_transform(transformed_image)
 
     return restored_image
