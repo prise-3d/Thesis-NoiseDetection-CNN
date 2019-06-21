@@ -38,7 +38,8 @@ cycle_scenes_indices            = ['E', 'I']
 normalization_choices           = ['svd', 'svdn', 'svdne']
 zones_indices                   = np.arange(16)
 
-metric_choices_labels           = ['all', 'svd_reconstruction']
+metric_choices_labels           = ['all', 'svd_reconstruction', 'fast_ica_reconstruction', 'ipca_reconstruction']
 
-keras_epochs                    = 500
+keras_epochs                    = 50
 keras_batch                     = 32
+val_dataset_size                = 0.2
