@@ -18,16 +18,16 @@ Generate custom dataset from one reconstructed method or multiples (implemented 
 python generate_dataset.py -h
 ```
 
-### Reconstruction parameter
+### Reconstruction parameter (--params)
 
 List of expected parameter by reconstruction method:
-- **svd:** Singular Values Decomposition
+- **svd_reconstruction:** Singular Values Decomposition
   - Param definition: *interval data used for reconstruction (begin, end)*
   - Example: *"100, 200"*
-- **ipca:** Iterative Principal Component Analysis
+- **ipca_reconstruction:** Iterative Principal Component Analysis
   - Param definition: *number of components used for compression and batch size*
   - Example: *"50, 32"*
-- **fast_ica:**  Fast Iterative Component Analysis
+- **fast_ica_reconstruction:**  Fast Iterative Component Analysis
   - Param definition: *number of components used for compression*
   - Example: *"50"*
 

@@ -22,12 +22,6 @@ from sklearn.metrics import roc_auc_score, accuracy_score, precision_score, reca
 img_width, img_height = 200, 200
 batch_size = 32
 
-# 1 because we have 1 color canal
-if K.image_data_format() == 'channels_first':
-    input_shape = (1, img_width, img_height)
-else:
-    input_shape = (img_width, img_height, 1)
-
 def auc(y_true, y_pred):
     auc = tf.metrics.auc(y_true, y_pred)[1]
     K.get_session().run(tf.local_variables_initializer())
@@ -96,6 +90,7 @@ def main():
     parser.add_argument('--batch_size', type=int, help='batch size used as model input', default=cfg.keras_batch)
     parser.add_argument('--epochs', type=int, help='number of epochs used for training model', default=cfg.keras_epochs)
     parser.add_argument('--val_size', type=int, help='percent of validation data during training process', default=cfg.val_dataset_size)
+    parser.add_argument('--n_channels', type=int, help='number of canals for 3D', default=1)
 
     args = parser.parse_args()
 
@@ -104,7 +99,14 @@ def main():
     p_batch_size = args.batch_size
     p_epochs     = args.epochs
     p_val_size   = args.val_size
+    p_n_channels = args.n_channels
 
+    # specify the number of dimensions
+    if K.image_data_format() == 'channels_first':
+        input_shape = (p_n_channels, img_width, img_height)
+    else:
+        input_shape = (img_width, img_height, p_n_channels)
+        
     ########################
     # 1. Get and prepare data
     ########################
@@ -120,9 +122,14 @@ def main():
     dataset_test = shuffle(dataset_test)
 
     print("Reading all images data...")
-    dataset_train[1] = dataset_train[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE).reshape(input_shape))
-    dataset_test[1] = dataset_test[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE).reshape(input_shape))
-    
+
+    # `:` is the separator used for getting each img path
+    if p_n_channels > 1:
+        dataset_train[1] = dataset_train[1].split(':').apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE).reshape(input_shape))
+        dataset_test[1] = dataset_test[1].split(':').apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE).reshape(input_shape))
+    else:
+        dataset_train[1] = dataset_train[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE).reshape(input_shape))
+        dataset_test[1] = dataset_test[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE).reshape(input_shape))
 
     # get dataset with equal number of classes occurences
     noisy_df_train = dataset_train[dataset_train.ix[:, 0] == 1]
