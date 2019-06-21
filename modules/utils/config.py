@@ -40,6 +40,8 @@ zones_indices                   = np.arange(16)
 
 metric_choices_labels           = ['all', 'svd_reconstruction', 'fast_ica_reconstruction', 'ipca_reconstruction']
 
-keras_epochs                    = 50
+keras_epochs                    = 30
 keras_batch                     = 32
 val_dataset_size                = 0.2
+
+keras_img_size                  = (200, 200)
