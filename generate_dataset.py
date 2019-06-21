@@ -32,7 +32,7 @@ min_max_filename        = cfg.min_max_filename_extension
 scenes_list             = cfg.scenes_names
 scenes_indexes          = cfg.scenes_indices
 choices                 = cfg.normalization_choices
-path                    = cfg.dataset_path
+dataset_path            = cfg.dataset_path
 zones                   = cfg.zones_indices
 seuil_expe_filename     = cfg.seuil_expe_filename
 
@@ -41,7 +41,7 @@ output_data_folder      = cfg.output_data_folder
 
 generic_output_file_svd = '_random.csv'
 
-def generate_data_model(_scenes_list, _filename, _transformation, _scenes, _nb_zones = 4, _random=0):
+def generate_data_model(_scenes_list, _filename, _transformations, _scenes, _nb_zones = 4, _random=0):
 
     output_train_filename = _filename + ".train"
     output_test_filename = _filename + ".test"
@@ -56,14 +56,14 @@ def generate_data_model(_scenes_list, _filename, _transformation, _scenes, _nb_z
     train_file_data = []
     test_file_data  = []
 
-    scenes = os.listdir(path)
+    scenes = os.listdir(dataset_path)
     # remove min max file from scenes folder
     scenes = [s for s in scenes if min_max_filename not in s]
 
     # go ahead each scenes
     for id_scene, folder_scene in enumerate(_scenes_list):
 
-        scene_path = os.path.join(path, folder_scene)
+        scene_path = os.path.join(dataset_path, folder_scene)
 
         zones_indices = zones
 
@@ -97,20 +97,52 @@ def generate_data_model(_scenes_list, _filename, _transformation, _scenes, _nb_z
             zone_path = os.path.join(scene_path, current_zone_folder)
 
             # custom path for interval of reconstruction and metric
-            metric_interval_path = os.path.join(zone_path, _transformation.getTranformationPath())
 
-            for label in os.listdir(metric_interval_path):
-                label_path = os.path.join(metric_interval_path, label)
+            metrics_path = []
 
-                images = sorted(os.listdir(label_path))
+            for transformation in _transformations:
+                metric_interval_path = os.path.join(zone_path, transformation.getTransformationPath())
+                metrics_path.append(metric_interval_path)
 
-                for img in images:
-                    img_path = os.path.join(label_path, img)
+            # as labels are same for each metric
+            for label in os.listdir(metrics_path[0]):
+
+                label_metrics_path = []
+
+                for path in metrics_path:
+                    label_path = os.path.join(path, label)
+                    label_metrics_path.append(label_path)
+
+                # getting images list for each metric
+                metrics_images_list = []
+                    
+                for label_path in label_metrics_path:
+                    images = sorted(os.listdir(label_path))
+                    metrics_images_list.append(images)
+
+                # construct each line using all images path of each
+                for index_image in range(0, len(metrics_images_list[0])):
+                    
+                    images_path = []
+
+                    # getting images with same index and hence name for each metric (transformation)
+                    for index_metric in range(0, len(metrics_path)):
+                        img_path = metrics_images_list[index_metric][index_image]
+                        images_path.append(os.path.join(label_metrics_path[index_metric], img_path))
 
                     if label == cfg.noisy_folder:
-                        line = '1;' + img_path + '\n'
+                        line = '1;'
                     else:
-                        line = '0;' + img_path + '\n'
+                        line = '0;'
+
+                    # compute line information with all images paths
+                    for id_path, img_path in enumerate(images_path):
+                        if id_path < len(images_path) - 1:
+                            line = line + img_path + '::'
+                        else:
+                            line = line + img_path
+                    
+                    line = line + '\n'
 
                     if id_zone < _nb_zones and folder_scene in _scenes:
                         train_file_data.append(line)
@@ -137,11 +169,14 @@ def main():
     parser = argparse.ArgumentParser(description="Compute specific dataset for model using of metric")
 
     parser.add_argument('--output', type=str, help='output file name desired (.train and .test)')
-    parser.add_argument('--metric', type=str, 
-                                    help="metric choice in order to compute data", 
-                                    choices=metric_choices,
+    parser.add_argument('--metrics', type=str, 
+                                     help="list of metrics choice in order to compute data",
+                                     default='svd_reconstruction, ipca_reconstruction',
+                                     required=True)
+    parser.add_argument('--params', type=str, 
+                                    help="list of specific param for each metric choice (See README.md for further information in 3D mode)", 
+                                    default='100, 200 :: 50, 25',
                                     required=True)
-    parser.add_argument('--param', type=str, help="specific param for metric (See README.md for further information)")
     parser.add_argument('--scenes', type=str, help='List of scenes to use for training data')
     parser.add_argument('--nb_zones', type=int, help='Number of zones to use for training data set', choices=list(range(1, 17)))
     parser.add_argument('--renderer', type=str, help='Renderer choice in order to limit scenes used', choices=cfg.renderer_choices, default='all')
@@ -150,15 +185,22 @@ def main():
     args = parser.parse_args()
 
     p_filename = args.output
-    p_metric   = args.metric
-    p_param    = args.param
+    p_metrics  = list(map(str.strip, args.metrics.split(',')))
+    p_params   = list(map(str.strip, args.params.split('::')))
     p_scenes   = args.scenes.split(',')
     p_nb_zones = args.nb_zones
     p_renderer = args.renderer
     p_random   = args.random
 
-    # create new Transformation obj
-    transformation = Transformation(p_metric, p_param)
+    # create list of Transformation
+    transformations = []
+
+    for id, metric in enumerate(p_metrics):
+
+        if metric not in metric_choices:
+            raise ValueError("Unknown metric, please select a correct metric : ", metric_choices)
+
+        transformations.append(Transformation(metric, p_params[id]))
 
     # list all possibles choices of renderer
     scenes_list = dt.get_renderer_scenes_names(p_renderer)
@@ -172,7 +214,7 @@ def main():
         scenes_selected.append(scenes_list[index])
 
     # create database using img folder (generate first time only)
-    generate_data_model(scenes_list, p_filename, transformation, scenes_selected, p_nb_zones, p_random)
+    generate_data_model(scenes_list, p_filename, transformations, scenes_selected, p_nb_zones, p_random)
 
 if __name__== "__main__":
     main()

@@ -7,79 +7,12 @@ import cv2
 
 from sklearn.utils import shuffle
 
-from keras.preprocessing.image import ImageDataGenerator
-from keras.models import Sequential
-from keras.layers import Conv2D, MaxPooling2D, AveragePooling2D
-from keras.layers import Activation, Dropout, Flatten, Dense, BatchNormalization
-from keras import backend as K
-import tensorflow as tf
-
-from keras.utils import plot_model
-
 from modules.utils import config as cfg
+from modules.models import models
+
+from keras import backend as K
+
 from sklearn.metrics import roc_auc_score, accuracy_score, precision_score, recall_score, f1_score
-
-img_width, img_height = cfg.keras_img_size
-batch_size = 32
-
-def auc(y_true, y_pred):
-    auc = tf.metrics.auc(y_true, y_pred)[1]
-    K.get_session().run(tf.local_variables_initializer())
-    
-    return auc
-
-def generate_model(_input_shape):
-
-    model = Sequential()
-
-    model.add(Conv2D(60, (2, 2), input_shape=_input_shape))
-    model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-
-    model.add(Conv2D(40, (2, 2)))
-    model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-
-    model.add(Conv2D(20, (2, 2)))
-    model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-
-    model.add(Flatten())
-
-    model.add(Dense(140))
-    model.add(Activation('relu'))
-    model.add(BatchNormalization())
-    model.add(Dropout(0.4))
-
-    model.add(Dense(120))
-    model.add(Activation('relu'))
-    model.add(BatchNormalization())
-    model.add(Dropout(0.4))
-
-    model.add(Dense(80))
-    model.add(Activation('relu'))
-    model.add(BatchNormalization())
-    model.add(Dropout(0.4))
-
-    model.add(Dense(40))
-    model.add(Activation('relu'))
-    model.add(BatchNormalization())
-    model.add(Dropout(0.4))
-
-    model.add(Dense(20))
-    model.add(Activation('relu'))
-    model.add(BatchNormalization())
-    model.add(Dropout(0.4))
-
-    model.add(Dense(1))
-    model.add(Activation('sigmoid'))
-
-    model.compile(loss='binary_crossentropy',
-                  optimizer='rmsprop',
-                  metrics=['accuracy', auc])
-
-    return model
-
 
 def main():
 
@@ -90,7 +23,6 @@ def main():
     parser.add_argument('--batch_size', type=int, help='batch size used as model input', default=cfg.keras_batch)
     parser.add_argument('--epochs', type=int, help='number of epochs used for training model', default=cfg.keras_epochs)
     parser.add_argument('--val_size', type=int, help='percent of validation data during training process', default=cfg.val_dataset_size)
-    parser.add_argument('--n_channels', type=int, help='number of canals for 3D', default=1)
 
     args = parser.parse_args()
 
@@ -99,7 +31,6 @@ def main():
     p_batch_size = args.batch_size
     p_epochs     = args.epochs
     p_val_size   = args.val_size
-    p_n_channels = args.n_channels
         
     ########################
     # 1. Get and prepare data
@@ -118,15 +49,35 @@ def main():
     print("Reading all images data...")
 
     # getting number of chanel
-    n_channels = len(dataset_train[1].split(':'))
+    n_channels = len(dataset_train[1][1].split('::'))
+    print("Number of channels : ", n_channels)
+
+    img_width, img_height = cfg.keras_img_size
+
+    # specify the number of dimensions
+    if K.image_data_format() == 'channels_first':
+        if n_channels > 1:
+            input_shape = (1, n_channels, img_width, img_height)
+        else:
+            input_shape = (n_channels, img_width, img_height)
+
+    else:
+        if n_channels > 1:
+            input_shape = (1, img_width, img_height, n_channels)
+        else:
+            input_shape = (img_width, img_height, n_channels)
 
     # `:` is the separator used for getting each img path
-    if p_n_channels > 1:
-        dataset_train[1] = dataset_train[1].split(':').apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE).reshape(input_shape))
-        dataset_test[1] = dataset_test[1].split(':').apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE).reshape(input_shape))
+    if n_channels > 1:
+        dataset_train[1] = dataset_train[1].apply(lambda x: [cv2.imread(path, cv2.IMREAD_GRAYSCALE) for path in x.split('::')])
+        dataset_test[1] = dataset_test[1].apply(lambda x: [cv2.imread(path, cv2.IMREAD_GRAYSCALE) for path in x.split('::')])
     else:
-        dataset_train[1] = dataset_train[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE).reshape(input_shape))
-        dataset_test[1] = dataset_test[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE).reshape(input_shape))
+        dataset_train[1] = dataset_train[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE))
+        dataset_test[1] = dataset_test[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE))
+
+    # reshape array data
+    dataset_train[1] = dataset_train[1].apply(lambda x: np.array(x).reshape(input_shape))
+    dataset_test[1] = dataset_test[1].apply(lambda x: np.array(x).reshape(input_shape))
 
     # get dataset with equal number of classes occurences
     noisy_df_train = dataset_train[dataset_train.ix[:, 0] == 1]
@@ -178,13 +129,7 @@ def main():
     # 2. Getting model
     #######################
 
-        # specify the number of dimensions
-    if K.image_data_format() == 'channels_first':
-        input_shape = (n_channels, img_width, img_height)
-    else:
-        input_shape = (img_width, img_height, n_channels)
-
-    model = generate_model(input_shape)
+    model = models.get_model(n_channels, input_shape)
     model.summary()
  
     model.fit(x_data_train, y_dataset_train.values, validation_split=p_val_size, epochs=p_epochs, batch_size=p_batch_size)

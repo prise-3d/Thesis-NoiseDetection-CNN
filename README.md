@@ -33,7 +33,13 @@ List of expected parameter by reconstruction method:
 
 **__Example:__**
 ```bash
-python generate_dataset_3D.py --output data/output_data_filename --metrics "svd_reconstruction, ipca_reconstruction, fast_ica_reconstruction" --renderer "maxwell" --scenes "A, D, G, H" --params "100, 200 :: 50, 10 :: 50" --nb_zones 10 --random 1
+python generate_dataset.py --output data/output_data_filename --metrics "svd_reconstruction, ipca_reconstruction, fast_ica_reconstruction" --renderer "maxwell" --scenes "A, D, G, H" --params "100, 200 :: 50, 10 :: 50" --nb_zones 10 --random 1
+```
+
+
+Then, train model using your custom dataset:
+```bash
+python train_model --data data/custom_dataset --output output_model_name
 ```
 
 ## Modules
@@ -41,6 +47,9 @@ python generate_dataset_3D.py --output data/output_data_filename --metrics "svd_
 This project contains modules:
 - **modules/utils/config.py**: *Store all configuration information about the project and dataset information*
 - **modules/utils/data.py**: *Usefull methods used for dataset*
+- **modules/models/metrics.py**: *Usefull methods for performance comparisons*
+- **modules/models/models.py**: *Generation of CNN model*
+- **modules/classes/Transformation.py**: *Transformation class for more easily manage computation*
 
 All these modules will be enhanced during development of the project
 

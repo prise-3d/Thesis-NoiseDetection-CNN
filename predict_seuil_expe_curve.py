@@ -10,6 +10,7 @@ import subprocess
 import time
 
 from modules.utils import config as cfg
+from modules.utils import data as dt
 
 config_filename           = cfg.config_filename
 scenes_path               = cfg.dataset_path
@@ -32,8 +33,6 @@ current_dirpath = os.getcwd()
 
 def main():
 
-    p_custom = False
-        
     parser = argparse.ArgumentParser(description="Script which predicts threshold using specific keras model")
 
     parser.add_argument('--metrics', type=str, 
@@ -44,26 +43,31 @@ def main():
                                     help="list of specific param for each metric choice (See README.md for further information in 3D mode)", 
                                     default='100, 200 :: 50, 25',
                                     required=True)
-    parser.add_argument('--model', type=str, help='.json file of keras model')
+    parser.add_argument('--model', type=str, help='.json file of keras model', required=True)
+    parser.add_argument('--renderer', type=str, 
+                                      help='Renderer choice in order to limit scenes used', 
+                                      choices=cfg.renderer_choices, 
+                                      default='all', 
+                                      required=True)
 
     args = parser.parse_args()
 
     p_metrics    = list(map(str.strip, args.metrics.split(',')))
     p_params     = list(map(str.strip, args.params.split('::')))
     p_model_file = args.model
+    p_renderer   = args.renderer
 
-    args = parser.parse_args()
+    scenes_list = dt.get_renderer_scenes_names(p_renderer)
 
     scenes = os.listdir(scenes_path)
-    scenes = [s for s in scenes if s in maxwell_scenes]
 
     print(scenes)
 
     # go ahead each scenes
     for id_scene, folder_scene in enumerate(scenes):
 
-        # only take in consideration maxwell scenes
-        if folder_scene in maxwell_scenes:
+        # only take in consideration renderer scenes
+        if folder_scene in scenes_list:
 
             print(folder_scene)
 
