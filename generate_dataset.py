@@ -111,8 +111,8 @@ def generate_data_model(_scenes_list, _filename, _transformations, _scenes, _nb_
                     image_name = transformation.getParam().split('/')[-1]
 
                     # {sceneName}/zoneXX/static/img
-                    image_folder = image_name.replace('.png', '')
-                    image_folder_path = os.path.join(static_metric_path, image_folder)
+                    image_prefix_name = image_name.replace('.png', '')
+                    image_folder_path = os.path.join(static_metric_path, image_prefix_name)
                     
                     if not os.path.exists(image_folder_path):
                         os.makedirs(image_folder_path)
@@ -126,27 +126,8 @@ def generate_data_model(_scenes_list, _filename, _transformations, _scenes, _nb_
 
                     static_transform_image_block = divide_in_blocks(static_transform_image, cfg.keras_img_size)[id_zone]
 
-                    # compute augmented images if necessary
-                    rotations = [0, 90, 180, 270]
-                    img_flip_labels = ['original', 'horizontal', 'vertical', 'both']
+                    dt.augmented_data_image(static_transform_image_block, image_folder_path, image_prefix_name)
 
-                    horizontal_img = static_transform_image_block.transpose(Image.FLIP_LEFT_RIGHT)
-                    vertical_img = static_transform_image_block.transpose(Image.FLIP_TOP_BOTTOM)
-                    both_img = static_transform_image_block.transpose(Image.TRANSPOSE)
-
-                    flip_images = [static_transform_image_block, horizontal_img, vertical_img, both_img]
-
-                    # rotate and flip image to increase dataset size
-                    for id, flip in enumerate(flip_images):
-                        for rotation in rotations:
-                            rotated_output_img = flip.rotate(rotation)
-
-                            output_reconstructed_filename = image_folder + cfg.post_image_name_separator
-                            output_reconstructed_filename = output_reconstructed_filename + img_flip_labels[id] + '_' + str(rotation) + '.png'
-                            output_reconstructed_path = os.path.join(image_folder_path, output_reconstructed_filename)
-
-                            if not os.path.exists(output_reconstructed_path):
-                                rotated_output_img.save(output_reconstructed_path)
                 else:
                     metric_interval_path = os.path.join(zone_path, transformation.getTransformationPath())
                     metrics_path.append(metric_interval_path)
