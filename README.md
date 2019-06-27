@@ -2,7 +2,11 @@
 
 ## Requirements
 
+```bash
+git clone --recursive https://github.com/prise-3d/Thesis-NoiseDetection-CNN.git XXXXX
 ```
+
+```bash
 pip install -r requirements.txt
 ```
 
@@ -30,6 +34,9 @@ List of expected parameter by reconstruction method:
 - **fast_ica_reconstruction:**  Fast Iterative Component Analysis
   - Param definition: *number of components used for compression*
   - Example: *"50"*
+- **static** Use static file to manage (such as z-buffer, normals card...)
+  - Param definition: *Name of image of scene need to be in {sceneName}/static/xxxx.png*
+  - Example: *"img.png"*
 
 **__Example:__**
 ```bash
