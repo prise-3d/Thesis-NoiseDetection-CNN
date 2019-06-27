@@ -2,8 +2,8 @@ Pillow
 keras
 tensorflow
 sklearn
-image_slicer
-pydot
 matplotlib
 path.py
-IPFML
+ipfml
+cv2
+json

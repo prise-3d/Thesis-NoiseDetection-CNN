@@ -13,13 +13,12 @@ import time
 import json
 
 from PIL import Image
-from ipfml import processing, metrics, utils
+from ipfml.processing.segmentation import divide_in_blocks
 from skimage import color
 
 from modules.utils import config as cfg
 from modules.utils import data as dt
 
-from transformation_functions import svd_reconstruction
 from modules.classes.Transformation import Transformation
 
 # getting configuration information
@@ -53,6 +52,8 @@ def generate_data_model(_scenes_list, _filename, _transformations, _scenes, _nb_
     if not os.path.exists(output_data_folder):
         os.makedirs(output_data_folder)
 
+    zones_indices = zones
+
     train_file_data = []
     test_file_data  = []
 
@@ -61,11 +62,9 @@ def generate_data_model(_scenes_list, _filename, _transformations, _scenes, _nb_
     scenes = [s for s in scenes if min_max_filename not in s]
 
     # go ahead each scenes
-    for id_scene, folder_scene in enumerate(_scenes_list):
+    for folder_scene in _scenes_list:
 
         scene_path = os.path.join(dataset_path, folder_scene)
-
-        zones_indices = zones
 
         # shuffle list of zones (=> randomly choose zones)
         # only in random mode
@@ -101,8 +100,56 @@ def generate_data_model(_scenes_list, _filename, _transformations, _scenes, _nb_
             metrics_path = []
 
             for transformation in _transformations:
-                metric_interval_path = os.path.join(zone_path, transformation.getTransformationPath())
-                metrics_path.append(metric_interval_path)
+                
+                # check if it's a static content and create augmented images if necessary
+                if transformation.getName() == 'static':
+                    
+                    # {sceneName}/zoneXX/static
+                    static_metric_path = os.path.join(zone_path, transformation.getName())
+
+                    # img.png
+                    image_name = transformation.getParam().split('/')[-1]
+
+                    # {sceneName}/zoneXX/static/img
+                    image_folder = image_name.replace('.png', '')
+                    image_folder_path = os.path.join(static_metric_path, image_folder)
+                    
+                    if not os.path.exists(image_folder_path):
+                        os.makedirs(image_folder_path)
+
+                    metrics_path.append(image_folder_path)
+
+                    # get image path to manage
+                    # {sceneName}/static/img.png
+                    transform_image_path = os.path.join(scene_path, transformation.getName(), image_name) 
+                    static_transform_image = Image.open(transform_image_path)
+
+                    static_transform_image_block = divide_in_blocks(static_transform_image, cfg.keras_img_size)[id_zone]
+
+                    # compute augmented images if necessary
+                    rotations = [0, 90, 180, 270]
+                    img_flip_labels = ['original', 'horizontal', 'vertical', 'both']
+
+                    horizontal_img = static_transform_image_block.transpose(Image.FLIP_LEFT_RIGHT)
+                    vertical_img = static_transform_image_block.transpose(Image.FLIP_TOP_BOTTOM)
+                    both_img = static_transform_image_block.transpose(Image.TRANSPOSE)
+
+                    flip_images = [static_transform_image_block, horizontal_img, vertical_img, both_img]
+
+                    # rotate and flip image to increase dataset size
+                    for id, flip in enumerate(flip_images):
+                        for rotation in rotations:
+                            rotated_output_img = flip.rotate(rotation)
+
+                            output_reconstructed_filename = image_folder + cfg.post_image_name_separator
+                            output_reconstructed_filename = output_reconstructed_filename + img_flip_labels[id] + '_' + str(rotation) + '.png'
+                            output_reconstructed_path = os.path.join(image_folder_path, output_reconstructed_filename)
+
+                            if not os.path.exists(output_reconstructed_path):
+                                rotated_output_img.save(output_reconstructed_path)
+                else:
+                    metric_interval_path = os.path.join(zone_path, transformation.getTransformationPath())
+                    metrics_path.append(metric_interval_path)
 
             # as labels are same for each metric
             for label in os.listdir(metrics_path[0]):
@@ -116,19 +163,35 @@ def generate_data_model(_scenes_list, _filename, _transformations, _scenes, _nb_
                 # getting images list for each metric
                 metrics_images_list = []
                     
-                for label_path in label_metrics_path:
-                    images = sorted(os.listdir(label_path))
-                    metrics_images_list.append(images)
+                for index_metric, label_path in enumerate(label_metrics_path):
+
+                    if _transformations[index_metric].getName() == 'static':
+                        # by default append nothing..
+                        metrics_images_list.append([])
+                    else:
+                        images = sorted(os.listdir(label_path))
+                        metrics_images_list.append(images)
 
                 # construct each line using all images path of each
                 for index_image in range(0, len(metrics_images_list[0])):
                     
                     images_path = []
 
+                    # get information about rotation and flip from first transformation (need to be a not static transformation)
+                    current_post_fix =  metrics_images_list[0][index_image].split(cfg.post_image_name_separator)[-1]
+
                     # getting images with same index and hence name for each metric (transformation)
                     for index_metric in range(0, len(metrics_path)):
-                        img_path = metrics_images_list[index_metric][index_image]
-                        images_path.append(os.path.join(label_metrics_path[index_metric], img_path))
+
+                        # custom behavior for static transformation (need to check specific image)
+                        if _transformations[index_metric].getName() == 'static':
+                            # add static path with selecting correct data augmented image
+                            image_name = _transformations[index_metric].getParam().split('/')[-1].replace('.png', '')
+                            img_path = os.path.join(metrics_path[index_metric], image_name + cfg.post_image_name_separator + current_post_fix)
+                            images_path.append(img_path)
+                        else:
+                            img_path = metrics_images_list[index_metric][index_image]
+                            images_path.append(os.path.join(label_metrics_path[index_metric], img_path))
 
                     if label == cfg.noisy_folder:
                         line = '1;'
@@ -201,6 +264,9 @@ def main():
             raise ValueError("Unknown metric, please select a correct metric : ", metric_choices)
 
         transformations.append(Transformation(metric, p_params[id]))
+
+    if transformations[0].getName() == 'static':
+        raise ValueError("The first transformation in list cannot be static")
 
     # list all possibles choices of renderer
     scenes_list = dt.get_renderer_scenes_names(p_renderer)
