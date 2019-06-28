@@ -6,19 +6,19 @@ Created on Wed Jun 19 11:47:42 2019
 @author: jbuisine
 """
 
+# main imports
 import sys, os, argparse
 import numpy as np
-import random
-import time
-import json
 
+# images processing imports
 from PIL import Image
 from ipfml.processing.segmentation import divide_in_blocks
-from skimage import color
 
-from modules.utils import config as cfg
+# modules imports
+sys.path.insert(0, '') # trick to enable import of main folder module
+
+import custom_config  as cfg
 from modules.utils import data as dt
-
 from modules.classes.Transformation import Transformation
 
 # getting configuration information
@@ -30,12 +30,11 @@ min_max_filename        = cfg.min_max_filename_extension
 # define all scenes values
 scenes_list             = cfg.scenes_names
 scenes_indexes          = cfg.scenes_indices
-choices                 = cfg.normalization_choices
 dataset_path            = cfg.dataset_path
 zones                   = cfg.zones_indices
 seuil_expe_filename     = cfg.seuil_expe_filename
 
-metric_choices          = cfg.metric_choices_labels
+features_choices        = cfg.features_choices_labels
 output_data_folder      = cfg.output_data_folder
 
 generic_output_file_svd = '_random.csv'
@@ -97,7 +96,7 @@ def generate_data_model(_scenes_list, _filename, _transformations, _scenes, _nb_
 
             # custom path for interval of reconstruction and metric
 
-            metrics_path = []
+            features_path = []
 
             for transformation in _transformations:
                 
@@ -117,7 +116,7 @@ def generate_data_model(_scenes_list, _filename, _transformations, _scenes, _nb_
                     if not os.path.exists(image_folder_path):
                         os.makedirs(image_folder_path)
 
-                    metrics_path.append(image_folder_path)
+                    features_path.append(image_folder_path)
 
                     # get image path to manage
                     # {sceneName}/static/img.png
@@ -130,49 +129,49 @@ def generate_data_model(_scenes_list, _filename, _transformations, _scenes, _nb_
 
                 else:
                     metric_interval_path = os.path.join(zone_path, transformation.getTransformationPath())
-                    metrics_path.append(metric_interval_path)
+                    features_path.append(metric_interval_path)
 
             # as labels are same for each metric
-            for label in os.listdir(metrics_path[0]):
+            for label in os.listdir(features_path[0]):
 
-                label_metrics_path = []
+                label_features_path = []
 
-                for path in metrics_path:
+                for path in features_path:
                     label_path = os.path.join(path, label)
-                    label_metrics_path.append(label_path)
+                    label_features_path.append(label_path)
 
                 # getting images list for each metric
-                metrics_images_list = []
+                features_images_list = []
                     
-                for index_metric, label_path in enumerate(label_metrics_path):
+                for index_metric, label_path in enumerate(label_features_path):
 
                     if _transformations[index_metric].getName() == 'static':
                         # by default append nothing..
-                        metrics_images_list.append([])
+                        features_images_list.append([])
                     else:
                         images = sorted(os.listdir(label_path))
-                        metrics_images_list.append(images)
+                        features_images_list.append(images)
 
                 # construct each line using all images path of each
-                for index_image in range(0, len(metrics_images_list[0])):
+                for index_image in range(0, len(features_images_list[0])):
                     
                     images_path = []
 
                     # get information about rotation and flip from first transformation (need to be a not static transformation)
-                    current_post_fix =  metrics_images_list[0][index_image].split(cfg.post_image_name_separator)[-1]
+                    current_post_fix =  features_images_list[0][index_image].split(cfg.post_image_name_separator)[-1]
 
                     # getting images with same index and hence name for each metric (transformation)
-                    for index_metric in range(0, len(metrics_path)):
+                    for index_metric in range(0, len(features_path)):
 
                         # custom behavior for static transformation (need to check specific image)
                         if _transformations[index_metric].getName() == 'static':
                             # add static path with selecting correct data augmented image
                             image_name = _transformations[index_metric].getParam().split('/')[-1].replace('.png', '')
-                            img_path = os.path.join(metrics_path[index_metric], image_name + cfg.post_image_name_separator + current_post_fix)
+                            img_path = os.path.join(features_path[index_metric], image_name + cfg.post_image_name_separator + current_post_fix)
                             images_path.append(img_path)
                         else:
-                            img_path = metrics_images_list[index_metric][index_image]
-                            images_path.append(os.path.join(label_metrics_path[index_metric], img_path))
+                            img_path = features_images_list[index_metric][index_image]
+                            images_path.append(os.path.join(label_features_path[index_metric], img_path))
 
                     if label == cfg.noisy_folder:
                         line = '1;'
@@ -213,8 +212,8 @@ def main():
     parser = argparse.ArgumentParser(description="Compute specific dataset for model using of metric")
 
     parser.add_argument('--output', type=str, help='output file name desired (.train and .test)')
-    parser.add_argument('--metrics', type=str, 
-                                     help="list of metrics choice in order to compute data",
+    parser.add_argument('--features', type=str, 
+                                     help="list of features choice in order to compute data",
                                      default='svd_reconstruction, ipca_reconstruction',
                                      required=True)
     parser.add_argument('--params', type=str, 
@@ -229,7 +228,7 @@ def main():
     args = parser.parse_args()
 
     p_filename = args.output
-    p_metrics  = list(map(str.strip, args.metrics.split(',')))
+    p_features  = list(map(str.strip, args.features.split(',')))
     p_params   = list(map(str.strip, args.params.split('::')))
     p_scenes   = args.scenes.split(',')
     p_nb_zones = args.nb_zones
@@ -239,12 +238,12 @@ def main():
     # create list of Transformation
     transformations = []
 
-    for id, metric in enumerate(p_metrics):
+    for id, feature in enumerate(p_features):
 
-        if metric not in metric_choices:
-            raise ValueError("Unknown metric, please select a correct metric : ", metric_choices)
+        if feature not in features_choices:
+            raise ValueError("Unknown metric, please select a correct metric : ", features_choices)
 
-        transformations.append(Transformation(metric, p_params[id]))
+        transformations.append(Transformation(feature, p_params[id]))
 
     if transformations[0].getName() == 'static':
         raise ValueError("The first transformation in list cannot be static")
