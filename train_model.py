@@ -7,8 +7,8 @@ import cv2
 
 from sklearn.utils import shuffle
 
-from modules.utils import config as cfg
-from modules.models import models
+import custom_config as cfg
+from modules.models import cnn_models as models
 
 from keras import backend as K
 
@@ -172,10 +172,10 @@ def main():
     roc_test_score = roc_auc_score(y_dataset_test, y_test_prediction)
 
     # save model performance
-    if not os.path.exists(cfg.models_information_folder):
-        os.makedirs(cfg.models_information_folder)
+    if not os.path.exists(cfg.results_information_folder):
+        os.makedirs(cfg.results_information_folder)
 
-    perf_file_path = os.path.join(cfg.models_information_folder, cfg.csv_model_comparisons_filename)
+    perf_file_path = os.path.join(cfg.results_information_folder, cfg.csv_model_comparisons_filename)
 
     with open(perf_file_path, 'a') as f:
         line = p_output + ';' + str(len(dataset_train)) + ';' + str(len(dataset_test)) + ';' \

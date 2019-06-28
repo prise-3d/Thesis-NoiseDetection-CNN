@@ -1,17 +1,22 @@
-from sklearn.externals import joblib
-
-import numpy as np
-
-from ipfml import processing
-from PIL import Image
-
+# main imports
 import sys, os, argparse
 import subprocess
-import time
+import numpy as np
 
-from modules.utils import config as cfg
+# image processing imports
+from ipfml.processing.segmentation import divide_in_blocks
+from PIL import Image
+
+# model imports
+from sklearn.externals import joblib
+
+# modules imports
+sys.path.insert(0, '') # trick to enable import of main folder module
+
+import custom_config as cfg
 from modules.utils import data as dt
 
+# parameters from config and others
 config_filename           = cfg.config_filename
 scenes_path               = cfg.dataset_path
 min_max_filename          = cfg.min_max_filename_extension
@@ -22,8 +27,7 @@ threshold_map_file_prefix = cfg.threshold_map_folder + "_"
 
 zones                     = cfg.zones_indices
 maxwell_scenes            = cfg.maxwell_scenes_names
-normalization_choices     = cfg.normalization_choices
-metric_choices            = cfg.metric_choices_labels
+features_choices          = cfg.features_choices_labels
 
 simulation_curves_zones   = "simulation_curves_zones_"
 tmp_filename              = '/tmp/__model__img_to_predict.png'
@@ -35,8 +39,8 @@ def main():
 
     parser = argparse.ArgumentParser(description="Script which predicts threshold using specific keras model")
 
-    parser.add_argument('--metrics', type=str, 
-                                     help="list of metrics choice in order to compute data",
+    parser.add_argument('--features', type=str, 
+                                     help="list of features choice in order to compute data",
                                      default='svd_reconstruction, ipca_reconstruction',
                                      required=True)
     parser.add_argument('--params', type=str, 
@@ -52,7 +56,7 @@ def main():
 
     args = parser.parse_args()
 
-    p_metrics    = list(map(str.strip, args.metrics.split(',')))
+    p_features    = list(map(str.strip, args.features.split(',')))
     p_params     = list(map(str.strip, args.params.split('::')))
     p_model_file = args.model
     p_renderer   = args.renderer
@@ -73,14 +77,14 @@ def main():
 
             scene_path = os.path.join(scenes_path, folder_scene)
 
-            config_path = os.path.join(scene_path, config_filename)
+            # get all images of folder
+            scene_images = sorted([os.path.join(scene_path, img) for img in os.listdir(scene_path) if cfg.scene_image_extension in img])
+            number_scene_image = len(scene_images)
 
-            with open(config_path, "r") as config_file:
-                last_image_name = config_file.readline().strip()
-                prefix_image_name = config_file.readline().strip()
-                start_index_image = config_file.readline().strip()
-                end_index_image = config_file.readline().strip()
-                step_counter = int(config_file.readline().strip())
+            start_quality_image = dt.get_scene_image_quality(scene_images[0])
+            end_quality_image   = dt.get_scene_image_quality(scene_images[-1])
+            # using first two images find the step of quality used
+            quality_step_image  = dt.get_scene_image_quality(scene_images[1]) - start_quality_image
 
             threshold_expes = []
             threshold_expes_found = []
@@ -100,26 +104,17 @@ def main():
                     threshold_expes.append(threshold)
 
                     # Initialize default data to get detected model threshold found
-                    threshold_expes_found.append(int(end_index_image)) # by default use max
+                    threshold_expes_found.append(int(end_quality_image)) # by default use max
 
-                block_predictions_str.append(index_str + ";" + p_model_file + ";" + str(threshold) + ";" + str(start_index_image) + ";" + str(step_counter))
+                block_predictions_str.append(index_str + ";" + p_model_file + ";" + str(threshold) + ";" + str(start_quality_image) + ";" + str(quality_step_image))
 
-            current_counter_index = int(start_index_image)
-            end_counter_index = int(end_index_image)
-
-            print(current_counter_index)
-
-            while(current_counter_index <= end_counter_index):
-
-                current_counter_index_str = str(current_counter_index)
-
-                while len(start_index_image) > len(current_counter_index_str):
-                    current_counter_index_str = "0" + current_counter_index_str
-
-                img_path = os.path.join(scene_path, prefix_image_name + current_counter_index_str + ".png")
+            # for each images
+            for id_img, img_path in enumerate(scene_images):
 
                 current_img = Image.open(img_path)
-                img_blocks = processing.divide_in_blocks(current_img, cfg.keras_img_size)
+                img_blocks = divide_in_blocks(current_img, cfg.keras_img_size)
+
+                current_quality_image = dt.get_scene_image_quality(img_path)
 
                 for id_block, block in enumerate(img_blocks):
 
@@ -130,7 +125,7 @@ def main():
                         block.save(tmp_file_path)
 
                         python_cmd = "python predict_noisy_image.py --image " + tmp_file_path + \
-                                        " --metrics " + p_metrics + \
+                                        " --features " + p_features + \
                                         " --params " + p_params + \
                                         " --model " + p_model_file 
 
@@ -147,9 +142,8 @@ def main():
                         # save here in specific file of block all the predictions done
                         block_predictions_str[id_block] = block_predictions_str[id_block] + ";" + str(prediction)
 
-                        print(str(id_block) + " : " + str(current_counter_index) + "/" + str(threshold_expes[id_block]) + " => " + str(prediction))
+                        print(str(id_block) + " : " + str(current_quality_image) + "/" + str(threshold_expes[id_block]) + " => " + str(prediction))
 
-                current_counter_index += step_counter
                 print("------------------------")
                 print("Scene " + str(id_scene + 1) + "/" + str(len(scenes)))
                 print("------------------------")
@@ -174,7 +168,6 @@ def main():
             print("------------------------")
 
             print("Model predictions are saved into %s" % map_filename)
-            time.sleep(2)
 
 
 if __name__== "__main__":

@@ -1,13 +1,19 @@
+
+# main imports
 import numpy as np
 import pandas as pd
-
-import matplotlib.pyplot as plt
 import os, sys, argparse
 
-from modules.utils import config as cfg
+# display imports
+import matplotlib.pyplot as plt
 
+# modules imports
+sys.path.insert(0, '') # trick to enable import of main folder module
+
+import custom_config as cfg
+
+# parameters from config and others
 learned_zones_folder = cfg.learned_zones_folder
-models_name          = cfg.models_names_list
 label_freq           = 6
 
 def display_curves(folder_path, model_name):
@@ -18,10 +24,8 @@ def display_curves(folder_path, model_name):
     @return nothing
     """
 
-    for name in models_name:
-        if name in model_name:
-            data_filename = model_name
-            learned_zones_folder_path = os.path.join(learned_zones_folder, data_filename)
+    data_filename = model_name
+    learned_zones_folder_path = os.path.join(learned_zones_folder, data_filename)
 
     data_files = [x for x in os.listdir(folder_path) if '.png' not in x]
 

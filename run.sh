@@ -3,7 +3,7 @@
 erased=$1
 
 # file which contains model names we want to use for simulation
-file_path="models_info/models_comparisons.csv"
+file_path="results/models_comparisons.csv"
 
 if [ "${erased}" == "Y" ]; then
     echo "Previous data file erased..."
@@ -22,14 +22,14 @@ svd_metric="svd_reconstruction"
 ipca_metric="ipca_reconstruction"
 fast_ica_metric="fast_ica_reconstruction"
 
-all_metrics="${svd_metric},${ipca_metric},${fast_ica_metric}"
+all_features="${svd_metric},${ipca_metric},${fast_ica_metric}"
 
 # First compute svd_reconstruction
 
 for begin in {80,85,90,95,100,105,110}; do
   for end in {150,160,170,180,190,200}; do
   
-    python generate_reconstructed_data.py --metric ${svd_metric} --param "${begin}, ${end}"
+    python generate/generate_reconstructed_data.py --metric ${svd_metric} --param "${begin}, ${end}"
 
     for zone in {6,8,10,12}; do
       OUTPUT_DATA_FILE="${svd_metric}_nb_zones_${zone}_B${begin}_E${end}"
@@ -42,7 +42,7 @@ for begin in {80,85,90,95,100,105,110}; do
       
         echo "Run computation for SVD model ${OUTPUT_DATA_FILE}"
 
-        python generate_dataset.py --output data/${OUTPUT_DATA_FILE} --metrics ${svd_metric} --renderer ${renderer} --scenes ${scenes} --params "${begin}, ${end}" --nb_zones ${zone} --random 1
+        python generate/generate_dataset.py --output data/${OUTPUT_DATA_FILE} --features ${svd_metric} --renderer ${renderer} --scenes ${scenes} --params "${begin}, ${end}" --nb_zones ${zone} --random 1
         
         python train_model.py --data data/${OUTPUT_DATA_FILE} --output ${OUTPUT_DATA_FILE} &
       fi
@@ -55,7 +55,7 @@ done
 ipca_batch_size=55
 
 for component in {10,15,20,25,30,35,45,50}; do
-  python generate_reconstructed_data.py --metric ${ipca_metric} --param "${component},${ipca_batch_size}"
+  python generate/generate_reconstructed_data.py --metric ${ipca_metric} --param "${component},${ipca_batch_size}"
 
   for zone in {6,8,10,12}; do
     OUTPUT_DATA_FILE="${ipca_metric}_nb_zones_${zone}_N${component}_BS${ipca_batch_size}"
@@ -68,7 +68,7 @@ for component in {10,15,20,25,30,35,45,50}; do
     
       echo "Run computation for IPCA model ${OUTPUT_DATA_FILE}"
 
-      python generate_dataset.py --output data/${OUTPUT_DATA_FILE} --metrics ${ipca_metric} --renderer ${renderer} --scenes ${scenes} --params "${component},${ipca_batch_size}" --nb_zones ${zone} --random 1
+      python generate/generate_dataset.py --output data/${OUTPUT_DATA_FILE} --features ${ipca_metric} --renderer ${renderer} --scenes ${scenes} --params "${component},${ipca_batch_size}" --nb_zones ${zone} --random 1
       python train_model.py --data data/${OUTPUT_DATA_FILE} --output ${OUTPUT_DATA_FILE} &
     fi
   done
@@ -78,7 +78,7 @@ done
 # computation of fast_ica_reconstruction
 
 for component in {50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200}; do
-  python generate_reconstructed_data.py --metric ${fast_ica_metric} --param "${component}"
+  python generate/generate_reconstructed_data.py --metric ${fast_ica_metric} --param "${component}"
 
   for zone in {6,8,10,12}; do
     OUTPUT_DATA_FILE="${fast_ica_metric}_nb_zones_${zone}_N${component}"
@@ -91,7 +91,7 @@ for component in {50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200}; d
     
       echo "Run computation for Fast ICA model ${OUTPUT_DATA_FILE}"
 
-      python generate_dataset.py --output data/${OUTPUT_DATA_FILE} --metrics ${fast_ica_metric} --renderer ${renderer} --scenes ${scenes} --params "${component}" --nb_zones ${zone} --random 1
+      python generate/generate_dataset.py --output data/${OUTPUT_DATA_FILE} --features ${fast_ica_metric} --renderer ${renderer} --scenes ${scenes} --params "${component}" --nb_zones ${zone} --random 1
       
       python train_model.py --data data/${OUTPUT_DATA_FILE} --output ${OUTPUT_DATA_FILE} &
     fi
@@ -120,7 +120,7 @@ for begin in {80,85,90,95,100,105,110}; do
 
             params="${begin}, ${end} :: ${ipca_component}, ${ipca_batch_size} :: ${fast_ica_component}"
 
-            python generate_dataset.py --output data/${OUTPUT_DATA_FILE} --metric ${all_metrics} --renderer ${renderer} --scenes ${scenes} --params "${params}" --nb_zones ${zone} --random 1
+            python generate/generate_dataset.py --output data/${OUTPUT_DATA_FILE} --metric ${all_features} --renderer ${renderer} --scenes ${scenes} --params "${params}" --nb_zones ${zone} --random 1
             
             python train_model.py --data data/${OUTPUT_DATA_FILE} --output ${OUTPUT_DATA_FILE} &
           fi
