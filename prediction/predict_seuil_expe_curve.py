@@ -17,7 +17,6 @@ import custom_config as cfg
 from modules.utils import data as dt
 
 # parameters from config and others
-config_filename           = cfg.config_filename
 scenes_path               = cfg.dataset_path
 min_max_filename          = cfg.min_max_filename_extension
 threshold_expe_filename   = cfg.seuil_expe_filename

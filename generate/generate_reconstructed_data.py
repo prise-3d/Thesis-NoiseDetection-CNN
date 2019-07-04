@@ -22,7 +22,6 @@ from modules.utils.data import get_scene_image_quality
 from modules.classes.Transformation import Transformation
 
 # getting configuration information
-config_filename         = cfg.config_filename
 zone_folder             = cfg.zone_folder
 min_max_filename        = cfg.min_max_filename_extension
 
