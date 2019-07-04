@@ -29,7 +29,7 @@ all_features="${svd_metric},${ipca_metric},${fast_ica_metric}"
 for begin in {80,85,90,95,100,105,110}; do
   for end in {150,160,170,180,190,200}; do
   
-    python generate/generate_reconstructed_data.py --metric ${svd_metric} --param "${begin}, ${end}"
+    python generate/generate_reconstructed_data.py --features ${svd_metric} --params "${begin}, ${end}"
 
     for zone in {6,8,10,12}; do
       OUTPUT_DATA_FILE="${svd_metric}_nb_zones_${zone}_B${begin}_E${end}"
@@ -55,7 +55,7 @@ done
 ipca_batch_size=55
 
 for component in {10,15,20,25,30,35,45,50}; do
-  python generate/generate_reconstructed_data.py --metric ${ipca_metric} --param "${component},${ipca_batch_size}"
+  python generate/generate_reconstructed_data.py --features ${ipca_metric} --params "${component},${ipca_batch_size}"
 
   for zone in {6,8,10,12}; do
     OUTPUT_DATA_FILE="${ipca_metric}_nb_zones_${zone}_N${component}_BS${ipca_batch_size}"
@@ -78,7 +78,7 @@ done
 # computation of fast_ica_reconstruction
 
 for component in {50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200}; do
-  python generate/generate_reconstructed_data.py --metric ${fast_ica_metric} --param "${component}"
+  python generate/generate_reconstructed_data.py --features ${fast_ica_metric} --params "${component}"
 
   for zone in {6,8,10,12}; do
     OUTPUT_DATA_FILE="${fast_ica_metric}_nb_zones_${zone}_N${component}"
