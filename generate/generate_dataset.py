@@ -9,6 +9,7 @@ Created on Wed Jun 19 11:47:42 2019
 # main imports
 import sys, os, argparse
 import numpy as np
+import random
 
 # images processing imports
 from PIL import Image
