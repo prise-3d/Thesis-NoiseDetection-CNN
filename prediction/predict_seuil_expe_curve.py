@@ -109,7 +109,7 @@ def main():
                 block_predictions_str.append(index_str + ";" + p_model_file + ";" + str(threshold) + ";" + str(start_quality_image) + ";" + str(quality_step_image))
 
             # for each images
-            for id_img, img_path in enumerate(scene_images):
+            for img_path in scene_images:
 
                 current_img = Image.open(img_path)
                 img_blocks = divide_in_blocks(current_img, cfg.keras_img_size)
