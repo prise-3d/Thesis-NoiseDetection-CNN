@@ -8,7 +8,7 @@ file_path="results/models_comparisons.csv"
 if [ "${erased}" == "Y" ]; then
     echo "Previous data file erased..."
     rm ${file_path}
-    mkdir -p models_info
+    mkdir -p results
     touch ${file_path}
 
     # add of header
@@ -29,7 +29,7 @@ all_features="${svd_metric},${ipca_metric},${fast_ica_metric}"
 for begin in {80,85,90,95,100,105,110}; do
   for end in {150,160,170,180,190,200}; do
   
-    python generate/generate_reconstructed_data.py --features ${svd_metric} --params "${begin}, ${end}"
+    #python generate/generate_reconstructed_data.py --features ${svd_metric} --params "${begin}, ${end}"
 
     for zone in {6,8,10,12}; do
       OUTPUT_DATA_FILE="${svd_metric}_nb_zones_${zone}_B${begin}_E${end}"
@@ -42,9 +42,9 @@ for begin in {80,85,90,95,100,105,110}; do
       
         echo "Run computation for SVD model ${OUTPUT_DATA_FILE}"
 
-        python generate/generate_dataset.py --output data/${OUTPUT_DATA_FILE} --features ${svd_metric} --renderer ${renderer} --scenes ${scenes} --params "${begin}, ${end}" --nb_zones ${zone} --random 1
+        python generate/generate_dataset.py --output data/${OUTPUT_DATA_FILE} --features ${svd_metric} --renderer ${renderer} --scenes "${scenes}" --params "${begin}, ${end}" --nb_zones ${zone} --random 1
         
-        python train_model.py --data data/${OUTPUT_DATA_FILE} --output ${OUTPUT_DATA_FILE} &
+        python train_model.py --data data/${OUTPUT_DATA_FILE} --output ${OUTPUT_DATA_FILE}
       fi
     done
   done
