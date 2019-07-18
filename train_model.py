@@ -1,18 +1,20 @@
+# main imports
 import numpy as np
 import pandas as pd
 import sys, os, argparse
 import json
 
-import cv2
+# model imports
+from modules.models import cnn_models as models
+from keras import backend as K
+from sklearn.metrics import roc_auc_score, accuracy_score, precision_score, recall_score, f1_score
 
+# image processing imports
+import cv2
 from sklearn.utils import shuffle
 
+# config imports
 import custom_config as cfg
-from modules.models import cnn_models as models
-
-from keras import backend as K
-
-from sklearn.metrics import roc_auc_score, accuracy_score, precision_score, recall_score, f1_score
 
 def main():
 
@@ -20,6 +22,7 @@ def main():
 
     parser.add_argument('--data', type=str, help='dataset filename prefix (without .train and .test)', required=True)
     parser.add_argument('--output', type=str, help='output file name desired for model (without .json extension)', required=True)
+    parser.add_argument('--tl', type=int, help='use or not of transfer learning (`VGG network`)', default=False)
     parser.add_argument('--batch_size', type=int, help='batch size used as model input', default=cfg.keras_batch)
     parser.add_argument('--epochs', type=int, help='number of epochs used for training model', default=cfg.keras_epochs)
     parser.add_argument('--val_size', type=int, help='percent of validation data during training process', default=cfg.val_dataset_size)
@@ -28,6 +31,7 @@ def main():
 
     p_data_file  = args.data
     p_output     = args.output
+    p_tl         = args.tl
     p_batch_size = args.batch_size
     p_epochs     = args.epochs
     p_val_size   = args.val_size
@@ -129,7 +133,7 @@ def main():
     # 2. Getting model
     #######################
 
-    model = models.get_model(n_channels, input_shape)
+    model = models.get_model(n_channels, input_shape, tl)
     model.summary()
  
     model.fit(x_data_train, y_dataset_train.values, validation_split=p_val_size, epochs=p_epochs, batch_size=p_batch_size)
