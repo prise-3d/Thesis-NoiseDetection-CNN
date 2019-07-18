@@ -27,10 +27,11 @@ all_features="${svd_metric},${ipca_metric},${fast_ica_metric}"
 
 # RUN LATER
 # compute using all transformation methods
-ipca_batch_size=55
+
 begin=100
 end=200
 ipca_component=30
+ipca_batch_size=55
 fast_ica_component=60
 zone=12
 
@@ -39,9 +40,9 @@ OUTPUT_DATA_FILE="${svd_metric}_B${begin}_E${end}_${ipca_metric}__N${ipca_compon
 
 python generate/generate_reconstructed_data.py --features ${svd_metric} --params "${begin}, ${end}"
 
-python generate/generate_reconstructed_data.py --features ${ipca_component} --params "${component},${ipca_batch_size}"
+python generate/generate_reconstructed_data.py --features ${ipca_metric} --params "${ipca_component},${ipca_batch_size}"
 
-python generate/generate_reconstructed_data.py --features ${fast_ica_component} --params "${component}"
+python generate/generate_reconstructed_data.py --features ${fast_ica_metric} --params "${fast_ica_component}"
 
 
 if grep -xq "${OUTPUT_DATA_FILE}" "${file_path}"; then
