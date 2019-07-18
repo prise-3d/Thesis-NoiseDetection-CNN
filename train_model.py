@@ -5,7 +5,7 @@ import sys, os, argparse
 import json
 
 # model imports
-from modules.models import cnn_models as models
+import cnn_models as models
 from keras import backend as K
 from sklearn.metrics import roc_auc_score, accuracy_score, precision_score, recall_score, f1_score
 
@@ -14,7 +14,10 @@ import cv2
 from sklearn.utils import shuffle
 
 # config imports
+sys.path.insert(0, '') # trick to enable import of main folder module
+
 import custom_config as cfg
+
 
 def main():
 
@@ -22,7 +25,7 @@ def main():
 
     parser.add_argument('--data', type=str, help='dataset filename prefix (without .train and .test)', required=True)
     parser.add_argument('--output', type=str, help='output file name desired for model (without .json extension)', required=True)
-    parser.add_argument('--tl', type=int, help='use or not of transfer learning (`VGG network`)', default=False)
+    parser.add_argument('--tl', type=int, help='use or not of transfer learning (`VGG network`)', default=0, choices=[0, 1])
     parser.add_argument('--batch_size', type=int, help='batch size used as model input', default=cfg.keras_batch)
     parser.add_argument('--epochs', type=int, help='number of epochs used for training model', default=cfg.keras_epochs)
     parser.add_argument('--val_size', type=int, help='percent of validation data during training process', default=cfg.val_dataset_size)
@@ -133,12 +136,14 @@ def main():
     # 2. Getting model
     #######################
 
-    model = models.get_model(n_channels, input_shape, tl)
+    model = models.get_model(n_channels, input_shape, p_tl)
     model.summary()
  
     model.fit(x_data_train, y_dataset_train.values, validation_split=p_val_size, epochs=p_epochs, batch_size=p_batch_size)
 
     score = model.evaluate(x_data_test, y_dataset_test, batch_size=p_batch_size)
+
+    print("Accuracy score on test dataset ", score)
 
     if not os.path.exists(cfg.saved_models_folder):
         os.makedirs(cfg.saved_models_folder)

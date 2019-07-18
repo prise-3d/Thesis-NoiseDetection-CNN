@@ -56,5 +56,5 @@ else
 
   python generate/generate_dataset.py --output data/${OUTPUT_DATA_FILE} --metric ${all_features} --renderer ${renderer} --scenes ${scenes} --params "${params}" --nb_zones ${zone} --random 1
   
-  python train_model.py --data data/${OUTPUT_DATA_FILE} --output ${OUTPUT_DATA_FILE} &
+  python train_model.py --data data/${OUTPUT_DATA_FILE} --output ${OUTPUT_DATA_FILE} --tl 1 &
 fi
