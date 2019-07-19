@@ -14,7 +14,7 @@ import tensorflow as tf
 sys.path.insert(0, '') # trick to enable import of main folder module
 
 import custom_config as cfg
-from modules.models import metrics
+from models import metrics
 
 def generate_model_2D(_input_shape):
 
