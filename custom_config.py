@@ -16,7 +16,7 @@ context_vars = vars()
 
 # variables
 
-## features_choices_labels         = ['static', 'svd_reconstruction', 'fast_ica_reconstruction', 'ipca_reconstruction']
+features_choices_labels         = ['static', 'svd_reconstruction', 'fast_ica_reconstruction', 'ipca_reconstruction', 'diff_filter']
 
 # parameters
 

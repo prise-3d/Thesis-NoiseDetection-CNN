@@ -86,6 +86,9 @@ List of expected parameter by reconstruction method:
 - **fast_ica_reconstruction:**  Fast Iterative Component Analysis
   - Param definition: *number of components used for compression*
   - Example: *"50"*
+- **diff_filter:**  Bilateral diff filter
+  - Param definition: *window size expected*
+  - Example: *"5, 5"*
 - **static** Use static file to manage (such as z-buffer, normals card...)
   - Param definition: *Name of image of scene need to be in {sceneName}/static/xxxx.png*
   - Example: *"img.png"*
