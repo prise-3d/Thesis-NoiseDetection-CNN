@@ -167,11 +167,16 @@ def main():
                                     help="list of specific param for each feature choice (See README.md for further information in 3D mode)", 
                                     default='100, 200 :: 50, 25',
                                     required=True)
+    parser.add_argument('--size', type=str, 
+                                help="specific size of image", 
+                                default='100, 100',
+                                required=True)
 
     args = parser.parse_args()
 
     p_features  = list(map(str.strip, args.features.split(',')))
-    p_params   = list(map(str.strip, args.params.split('::')))
+    p_params    = list(map(str.strip, args.params.split('::')))
+    p_size      = args.size
 
     transformations = []
 
@@ -180,7 +185,7 @@ def main():
         if feature not in features_choices or feature == 'static':
             raise ValueError("Unknown feature, please select a correct feature (`static` excluded) : ", features_choices)
 
-        transformations.append(Transformation(feature, p_params[id]))
+        transformations.append(Transformation(feature, p_params[id], p_size))
 
     # generate all or specific feature data
     for transformation in transformations:
