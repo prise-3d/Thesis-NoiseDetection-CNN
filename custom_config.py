@@ -9,6 +9,7 @@ context_vars = vars()
 
 ## noisy_folder                    = 'noisy'
 ## not_noisy_folder                = 'notNoisy'
+backup_model_folder             = 'models_backup'
 
 # file or extensions
 
@@ -24,4 +25,4 @@ keras_epochs                    = 50
 ## keras_batch                     = 32
 ## val_dataset_size                = 0.2
 
-## keras_img_size                  = (200, 200)
+keras_img_size                  = (96, 96)

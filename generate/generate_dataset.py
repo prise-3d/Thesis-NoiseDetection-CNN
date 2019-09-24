@@ -220,6 +220,9 @@ def main():
                                     help="list of specific param for each metric choice (See README.md for further information in 3D mode)", 
                                     default='100, 200 :: 50, 25',
                                     required=True)
+    parser.add_argument('--size', type=str, 
+                                  help="Size of input images",
+                                  default="100, 100")
     parser.add_argument('--scenes', type=str, help='List of scenes to use for training data')
     parser.add_argument('--nb_zones', type=int, help='Number of zones to use for training data set', choices=list(range(1, 17)))
     parser.add_argument('--renderer', type=str, help='Renderer choice in order to limit scenes used', choices=cfg.renderer_choices, default='all')
@@ -231,6 +234,7 @@ def main():
     p_features  = list(map(str.strip, args.features.split(',')))
     p_params   = list(map(str.strip, args.params.split('::')))
     p_scenes   = args.scenes.split(',')
+    p_size     = args.size # not necessary to split here
     p_nb_zones = args.nb_zones
     p_renderer = args.renderer
     p_random   = args.random
@@ -243,7 +247,7 @@ def main():
         if feature not in features_choices:
             raise ValueError("Unknown metric, please select a correct metric : ", features_choices)
 
-        transformations.append(Transformation(feature, p_params[id]))
+        transformations.append(Transformation(feature, p_params[id], p_size))
 
     if transformations[0].getName() == 'static':
         raise ValueError("The first transformation in list cannot be static")
