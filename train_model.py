@@ -147,7 +147,7 @@ def main():
     if not os.path.exists(cfg.backup_model_folder):
         os.makedirs(cfg.backup_model_folder)
 
-    filepath = os.path.join(cfg.backup_model_folder, "{0}-{epoch:02d}.hdf5".format(p_output))
+    filepath = os.path.join(cfg.backup_model_folder, p_output + "-{epoch:02d}.hdf5")
     checkpoint = ModelCheckpoint(filepath, monitor='val_auc', verbose=1, save_best_only=True, mode='max')
     callbacks_list = [checkpoint]
 
