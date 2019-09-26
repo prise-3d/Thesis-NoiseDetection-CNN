@@ -167,8 +167,10 @@ def main():
         last_backup = backups[-1]
         last_epoch = int(last_backup.split('__')[1].replace('.hdf5', ''))
         initial_epoch = last_epoch
-        print("Previous backup model found.. ")
-        print("Restart from epoch ", last_epoch)
+        print("-------------------------------------------------")
+        print("Previous backup model found with already", last_epoch, "done...")
+        print("Resuming from epoch", str(last_epoch + 1))
+        print("-------------------------------------------------")
 
     # concatenate train and validation data (`validation_split` param will do the separation into keras model)
     y_data = np.concatenate([y_dataset_train.values, y_dataset_val.values])
