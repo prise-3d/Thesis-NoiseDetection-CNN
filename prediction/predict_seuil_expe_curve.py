@@ -47,6 +47,7 @@ def main():
                                     default='100, 200 :: 50, 25',
                                     required=True)
     parser.add_argument('--model', type=str, help='.json file of keras model', required=True)
+    parser.add_argument('--size', type=str, help="Expected output size before processing transformation", default="100,100")
     parser.add_argument('--renderer', type=str, 
                                       help='Renderer choice in order to limit scenes used', 
                                       choices=cfg.renderer_choices, 
@@ -55,9 +56,10 @@ def main():
 
     args = parser.parse_args()
 
-    p_features    = list(map(str.strip, args.features.split(',')))
+    p_features   = list(map(str.strip, args.features.split(',')))
     p_params     = list(map(str.strip, args.params.split('::')))
     p_model_file = args.model
+    p_size       = args.size
     p_renderer   = args.renderer
 
     scenes_list = dt.get_renderer_scenes_names(p_renderer)
@@ -111,7 +113,7 @@ def main():
             for img_path in scene_images:
 
                 current_img = Image.open(img_path)
-                img_blocks = divide_in_blocks(current_img, cfg.keras_img_size)
+                img_blocks = divide_in_blocks(current_img, cfg.sub_image_size)
 
                 current_quality_image = dt.get_scene_image_quality(img_path)
 
@@ -126,7 +128,8 @@ def main():
                         python_cmd = "python predict_noisy_image.py --image " + tmp_file_path + \
                                         " --features " + p_features + \
                                         " --params " + p_params + \
-                                        " --model " + p_model_file 
+                                        " --model " + p_model_file + \
+                                        " --size " + p_size 
 
                         ## call command ##
                         p = subprocess.Popen(python_cmd, stdout=subprocess.PIPE, shell=True)
