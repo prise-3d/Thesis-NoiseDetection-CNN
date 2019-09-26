@@ -24,19 +24,14 @@ import custom_config as cfg
 
 def main():
 
-    # default keras configuration
-    #config = tf.ConfigProto( device_count = {'GPU': 1 , 'CPU': 8}) 
-    #sess = tf.Session(config=config) 
-    #keras.backend.set_session(sess)
-
     parser = argparse.ArgumentParser(description="Train Keras model and save it into .json file")
 
-    parser.add_argument('--data', type=str, help='dataset filename prefix (without .train and .test)', required=True)
+    parser.add_argument('--data', type=str, help='dataset filename prefix (without .train and .val)', required=True)
     parser.add_argument('--output', type=str, help='output file name desired for model (without .json extension)', required=True)
     parser.add_argument('--tl', type=int, help='use or not of transfer learning (`VGG network`)', default=0, choices=[0, 1])
     parser.add_argument('--batch_size', type=int, help='batch size used as model input', default=cfg.keras_batch)
     parser.add_argument('--epochs', type=int, help='number of epochs used for training model', default=cfg.keras_epochs)
-    parser.add_argument('--val_size', type=float, help='percent of validation data during training process', default=cfg.val_dataset_size)
+    #parser.add_argument('--val_size', type=float, help='percent of validation data during training process', default=cfg.val_dataset_size)
 
 
     args = parser.parse_args()
@@ -46,7 +41,7 @@ def main():
     p_tl          = args.tl
     p_batch_size  = args.batch_size
     p_epochs      = args.epochs
-    p_val_size    = args.val_size
+    #p_val_size    = args.val_size
     initial_epoch = 0
         
     ########################
@@ -54,14 +49,14 @@ def main():
     ########################
     print("Preparing data...")
     dataset_train = pd.read_csv(p_data_file + '.train', header=None, sep=";")
-    dataset_test = pd.read_csv(p_data_file + '.test', header=None, sep=";")
+    dataset_val = pd.read_csv(p_data_file + '.val', header=None, sep=";")
 
     print("Train set size : ", len(dataset_train))
-    print("Test set size : ", len(dataset_test))
+    print("val set size : ", len(dataset_val))
 
     # default first shuffle of data
     dataset_train = shuffle(dataset_train)
-    dataset_test = shuffle(dataset_test)
+    dataset_val = shuffle(dataset_val)
 
     print("Reading all images data...")
 
@@ -87,40 +82,44 @@ def main():
     # `:` is the separator used for getting each img path
     if n_channels > 1:
         dataset_train[1] = dataset_train[1].apply(lambda x: [cv2.imread(path, cv2.IMREAD_GRAYSCALE) for path in x.split('::')])
-        dataset_test[1] = dataset_test[1].apply(lambda x: [cv2.imread(path, cv2.IMREAD_GRAYSCALE) for path in x.split('::')])
+        dataset_val[1] = dataset_val[1].apply(lambda x: [cv2.imread(path, cv2.IMREAD_GRAYSCALE) for path in x.split('::')])
     else:
         dataset_train[1] = dataset_train[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE))
-        dataset_test[1] = dataset_test[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE))
+        dataset_val[1] = dataset_val[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE))
 
     # reshape array data
     dataset_train[1] = dataset_train[1].apply(lambda x: np.array(x).reshape(input_shape))
-    dataset_test[1] = dataset_test[1].apply(lambda x: np.array(x).reshape(input_shape))
+    dataset_val[1] = dataset_val[1].apply(lambda x: np.array(x).reshape(input_shape))
 
     # get dataset with equal number of classes occurences
     noisy_df_train = dataset_train[dataset_train.ix[:, 0] == 1]
     not_noisy_df_train = dataset_train[dataset_train.ix[:, 0] == 0]
     nb_noisy_train = len(noisy_df_train.index)
 
-    noisy_df_test = dataset_test[dataset_test.ix[:, 0] == 1]
-    not_noisy_df_test = dataset_test[dataset_test.ix[:, 0] == 0]
-    nb_noisy_test = len(noisy_df_test.index)
+    noisy_df_val = dataset_val[dataset_val.ix[:, 0] == 1]
+    not_noisy_df_val = dataset_val[dataset_val.ix[:, 0] == 0]
+    nb_noisy_val = len(noisy_df_val.index)
 
     final_df_train = pd.concat([not_noisy_df_train[0:nb_noisy_train], noisy_df_train])
-    final_df_test = pd.concat([not_noisy_df_test[0:nb_noisy_test], noisy_df_test])
+    final_df_val = pd.concat([not_noisy_df_val[0:nb_noisy_val], noisy_df_val])
 
     # shuffle data another time
     final_df_train = shuffle(final_df_train)
-    final_df_test = shuffle(final_df_test)
+    final_df_val = shuffle(final_df_val)
 
     final_df_train_size = len(final_df_train.index)
-    final_df_test_size = len(final_df_test.index)
+    final_df_val_size = len(final_df_val.index)
+
+    validation_split = final_df_val_size / (final_df_train_size + final_df_val_size)
+    print("Validation size is based of `.val` content")
+    print("Validation split is now set at", )
 
     # use of the whole data set for training
     x_dataset_train = final_df_train.ix[:,1:]
-    x_dataset_test = final_df_test.ix[:,1:]
+    x_dataset_val = final_df_val.ix[:,1:]
 
     y_dataset_train = final_df_train.ix[:,0]
-    y_dataset_test = final_df_test.ix[:,0]
+    y_dataset_val = final_df_val.ix[:,0]
 
     x_data_train = []
     for item in x_dataset_train.values:
@@ -129,18 +128,17 @@ def main():
 
     x_data_train = np.array(x_data_train)
 
-    x_data_test = []
-    for item in x_dataset_test.values:
+    x_data_val = []
+    for item in x_dataset_val.values:
         #print("Item is here", item)
-        x_data_test.append(item[0])
+        x_data_val.append(item[0])
 
-    x_data_test = np.array(x_data_test)
-
+    x_data_val = np.array(x_data_val)
 
     print("End of loading data..")
 
     print("Train set size (after balancing) : ", final_df_train_size)
-    print("Test set size (after balancing) : ", final_df_test_size)
+    print("val set size (after balancing) : ", final_df_val_size)
 
     #######################
     # 2. Getting model
@@ -170,11 +168,16 @@ def main():
         print("Previous backup model found.. ")
         print("Restart from epoch ", last_epoch)
 
-    model.fit(x_data_train, y_dataset_train.values, validation_split=p_val_size, initial_epoch=initial_epoch, epochs=p_epochs, batch_size=p_batch_size, callbacks=callbacks_list)
+    # concatenate train and validation data (`validation_split` param will do the separation into keras model)
+    y_data = y_dataset_train.values + y_dataset_val.values
+    x_data = x_data_train + y_data_train
 
-    score = model.evaluate(x_data_test, y_dataset_test, batch_size=p_batch_size)
+    # validation split parameter will use the last `%` data, so here, data will really validate our model
+    model.fit(x_data_train, y_dataset_train.values, validation_split=validation_split, initial_epoch=initial_epoch, epochs=p_epochs, batch_size=p_batch_size, callbacks=callbacks_list)
 
-    print("Accuracy score on test dataset ", score)
+    score = model.evaluate(x_data_val, y_dataset_val, batch_size=p_batch_size)
+
+    print("Accuracy score on val dataset ", score)
 
     if not os.path.exists(cfg.saved_models_folder):
         os.makedirs(cfg.saved_models_folder)
@@ -191,25 +194,25 @@ def main():
 
     # Get results obtained from model
     y_train_prediction = model.predict(x_data_train)
-    y_test_prediction = model.predict(x_data_test)
+    y_val_prediction = model.predict(x_data_val)
 
     y_train_prediction = [1 if x > 0.5 else 0 for x in y_train_prediction]
-    y_test_prediction = [1 if x > 0.5 else 0 for x in y_test_prediction]
+    y_val_prediction = [1 if x > 0.5 else 0 for x in y_val_prediction]
 
     acc_train_score = accuracy_score(y_dataset_train, y_train_prediction)
-    acc_test_score = accuracy_score(y_dataset_test, y_test_prediction)
+    acc_val_score = accuracy_score(y_dataset_val, y_val_prediction)
 
     f1_train_score = f1_score(y_dataset_train, y_train_prediction)
-    f1_test_score = f1_score(y_dataset_test, y_test_prediction)
+    f1_val_score = f1_score(y_dataset_val, y_val_prediction)
 
     recall_train_score = recall_score(y_dataset_train, y_train_prediction)
-    recall_test_score = recall_score(y_dataset_test, y_test_prediction)
+    recall_val_score = recall_score(y_dataset_val, y_val_prediction)
 
     pres_train_score = precision_score(y_dataset_train, y_train_prediction)
-    pres_test_score = precision_score(y_dataset_test, y_test_prediction)
+    pres_val_score = precision_score(y_dataset_val, y_val_prediction)
 
     roc_train_score = roc_auc_score(y_dataset_train, y_train_prediction)
-    roc_test_score = roc_auc_score(y_dataset_test, y_test_prediction)
+    roc_val_score = roc_auc_score(y_dataset_val, y_val_prediction)
 
     # save model performance
     if not os.path.exists(cfg.results_information_folder):
@@ -224,14 +227,16 @@ def main():
             
     # add information into file
     with open(perf_file_path, 'a') as f:
-        line = p_output + ';' + str(len(dataset_train)) + ';' + str(len(dataset_test)) + ';' \
-                        + str(final_df_train_size) + ';' + str(final_df_test_size) + ';' \
-                        + str(acc_train_score) + ';' + str(acc_test_score) + ';' \
-                        + str(f1_train_score) + ';' + str(f1_test_score) + ';' \
-                        + str(recall_train_score) + ';' + str(recall_test_score) + ';' \
-                        + str(pres_train_score) + ';' + str(pres_test_score) + ';' \
-                        + str(roc_train_score) + ';' + str(roc_test_score) + '\n'
+        line = p_output + ';' + str(len(dataset_train)) + ';' + str(len(dataset_val)) + ';' \
+                        + str(final_df_train_size) + ';' + str(final_df_val_size) + ';' \
+                        + str(acc_train_score) + ';' + str(acc_val_score) + ';' \
+                        + str(f1_train_score) + ';' + str(f1_val_score) + ';' \
+                        + str(recall_train_score) + ';' + str(recall_val_score) + ';' \
+                        + str(pres_train_score) + ';' + str(pres_val_score) + ';' \
+                        + str(roc_train_score) + ';' + str(roc_val_score) + '\n'
         f.write(line)
+
+    print("You can now run your model with your own `test` dataset")
 
 if __name__== "__main__":
     main()

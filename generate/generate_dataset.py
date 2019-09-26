@@ -42,7 +42,7 @@ generic_output_file_svd = '_random.csv'
 def generate_data_model(_scenes_list, _filename, _transformations, _scenes, _nb_zones = 4, _random=0):
 
     output_train_filename = _filename + ".train"
-    output_test_filename = _filename + ".test"
+    output_test_filename = _filename + ".val"
 
     if not '/' in output_train_filename:
         raise Exception("Please select filename with directory path to save data. Example : data/dataset")
