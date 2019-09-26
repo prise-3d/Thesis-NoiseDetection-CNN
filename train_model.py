@@ -25,9 +25,9 @@ import custom_config as cfg
 def main():
 
     # default keras configuration
-    config = tf.ConfigProto( device_count = {'GPU': 1 , 'CPU': 8}) 
-    sess = tf.Session(config=config) 
-    keras.backend.set_session(sess)
+    #config = tf.ConfigProto( device_count = {'GPU': 1 , 'CPU': 8}) 
+    #sess = tf.Session(config=config) 
+    #keras.backend.set_session(sess)
 
     parser = argparse.ArgumentParser(description="Train Keras model and save it into .json file")
 
@@ -38,14 +38,16 @@ def main():
     parser.add_argument('--epochs', type=int, help='number of epochs used for training model', default=cfg.keras_epochs)
     parser.add_argument('--val_size', type=float, help='percent of validation data during training process', default=cfg.val_dataset_size)
 
+
     args = parser.parse_args()
 
-    p_data_file  = args.data
-    p_output     = args.output
-    p_tl         = args.tl
-    p_batch_size = args.batch_size
-    p_epochs     = args.epochs
-    p_val_size   = args.val_size
+    p_data_file   = args.data
+    p_output      = args.output
+    p_tl          = args.tl
+    p_batch_size  = args.batch_size
+    p_epochs      = args.epochs
+    p_val_size    = args.val_size
+    initial_epoch = 0
         
     ########################
     # 1. Get and prepare data
@@ -144,17 +146,31 @@ def main():
     # 2. Getting model
     #######################
 
-    if not os.path.exists(cfg.backup_model_folder):
-        os.makedirs(cfg.backup_model_folder)
+    # create backup folder for current model
+    model_backup_folder = os.path.join(cfg.backup_model_folder, p_output)
+    if not os.path.exists(model_backup_folder):
+        os.makedirs(model_backup_folder)
 
-    filepath = os.path.join(cfg.backup_model_folder, p_output + "-{epoch:02d}.hdf5")
+    # add of callback models
+    filepath = os.path.join(cfg.backup_model_folder, p_output, p_output + "__{epoch:02d}.hdf5")
     checkpoint = ModelCheckpoint(filepath, monitor='val_auc', verbose=1, save_best_only=True, mode='max')
     callbacks_list = [checkpoint]
 
     model = models.get_model(n_channels, input_shape, p_tl)
     model.summary()
- 
-    model.fit(x_data_train, y_dataset_train.values, validation_split=p_val_size, epochs=p_epochs, batch_size=p_batch_size, callbacks=callbacks_list)
+
+    # check if backup already exists
+    backups = sorted(os.listdir(model_backup_folder))
+
+    if len(backups) > 0:
+        # TODO : check of initial epoch
+        last_backup = backups[-1]
+        last_epoch = int(last_backup.split('__')[1].replace('.hdf5', ''))
+        initial_epoch = last_epoch
+        print("Previous backup model found.. ")
+        print("Restart from epoch ", last_epoch)
+
+    model.fit(x_data_train, y_dataset_train.values, validation_split=p_val_size, initial_epoch=initial_epoch, epochs=p_epochs, batch_size=p_batch_size, callbacks=callbacks_list)
 
     score = model.evaluate(x_data_test, y_dataset_test, batch_size=p_batch_size)
 
@@ -201,6 +217,12 @@ def main():
 
     perf_file_path = os.path.join(cfg.results_information_folder, cfg.csv_model_comparisons_filename)
 
+    # write header if necessary
+    if not os.path.exists(perf_file_path):
+        with open(perf_file_path, 'w') as f:
+            f.write(cfg.perf_train_header_file)
+            
+    # add information into file
     with open(perf_file_path, 'a') as f:
         line = p_output + ';' + str(len(dataset_train)) + ';' + str(len(dataset_test)) + ';' \
                         + str(final_df_train_size) + ';' + str(final_df_test_size) + ';' \

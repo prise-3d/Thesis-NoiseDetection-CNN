@@ -9,6 +9,7 @@ from PIL import Image
 # model imports
 from sklearn.externals import joblib
 from keras.models import model_from_json
+from keras import backend as K
 
 # modules imports
 sys.path.insert(0, '') # trick to enable import of main folder module
@@ -38,13 +39,15 @@ def main():
                                     help="list of specific param for each feature choice (See README.md for further information in 3D mode)", 
                                     default='100, 200 :: 50, 25',
                                     required=True)
+    parser.add_argument('--size', type=str, help="Expected output size before processing transformation", default="100,100")
     parser.add_argument('--model', type=str, help='.json file of keras model')
 
     args = parser.parse_args()
 
     p_img_file   = args.image
-    p_features    = list(map(str.strip, args.features.split(',')))
+    p_features   = list(map(str.strip, args.features.split(',')))
     p_params     = list(map(str.strip, args.params.split('::')))
+    p_size       = args.size
     p_model_file = args.model
 
 
@@ -64,21 +67,21 @@ def main():
 
     for id, feature in enumerate(p_features):
 
-        if feature not in feature_choices:
-            raise ValueError("Unknown feature, please select a correct feature : ", feature_choices)
+        if feature not in features_choices:
+            raise ValueError("Unknown feature, please select a correct feature : ", features_choices)
 
-        transformations.append(Transformation(feature, p_params[id]))
+        transformations.append(Transformation(feature, p_params[id], p_size))
 
     # getting transformed image
     transformed_images = []
-
+    
     for transformation in transformations:
         transformed_images.append(transformation.getTransformedImage(img))
 
     data = np.array(transformed_images)
 
     # specify the number of dimensions
-    img_width, img_height = cfg.keras_img_size
+    img_width, img_height = cfg.sub_image_size
     n_channels = len(transformations)
 
     if K.image_data_format() == 'channels_first':

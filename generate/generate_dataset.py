@@ -123,7 +123,7 @@ def generate_data_model(_scenes_list, _filename, _transformations, _scenes, _nb_
                     transform_image_path = os.path.join(scene_path, transformation.getName(), image_name) 
                     static_transform_image = Image.open(transform_image_path)
 
-                    static_transform_image_block = divide_in_blocks(static_transform_image, cfg.keras_img_size)[id_zone]
+                    static_transform_image_block = divide_in_blocks(static_transform_image, cfg.sub_image_size)[id_zone]
 
                     dt.augmented_data_image(static_transform_image_block, image_folder_path, image_prefix_name)
 

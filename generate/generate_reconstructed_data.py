@@ -27,7 +27,7 @@ min_max_filename        = cfg.min_max_filename_extension
 
 # define all scenes values
 scenes_list             = cfg.scenes_names
-scenes_indexes          = cfg.scenes_indices
+scenes_indices          = cfg.scenes_indices
 path                    = cfg.dataset_path
 zones                   = cfg.zones_indices
 seuil_expe_filename     = cfg.seuil_expe_filename
@@ -37,7 +37,7 @@ output_data_folder      = cfg.output_data_folder
 
 generic_output_file_svd = '_random.csv'
 
-def generate_data(transformation):
+def generate_data(transformation, _scenes):
     """
     @brief Method which generates all .csv files from scenes
     @return nothing
@@ -50,107 +50,108 @@ def generate_data(transformation):
     # go ahead each scenes
     for id_scene, folder_scene in enumerate(scenes):
 
-        print(folder_scene)
-        scene_path = os.path.join(path, folder_scene)
+        if folder_scene in _scenes:
+            print(folder_scene)
+            scene_path = os.path.join(path, folder_scene)
 
-        # construct each zones folder name
-        zones_folder = []
-        features_folder = []
-        zones_threshold = []
+            # construct each zones folder name
+            zones_folder = []
+            features_folder = []
+            zones_threshold = []
 
-        # get zones list info
-        for index in zones:
-            index_str = str(index)
-            if len(index_str) < 2:
-                index_str = "0" + index_str
+            # get zones list info
+            for index in zones:
+                index_str = str(index)
+                if len(index_str) < 2:
+                    index_str = "0" + index_str
 
-            current_zone = "zone"+index_str
-            zones_folder.append(current_zone)
-            zone_path = os.path.join(scene_path, current_zone)
+                current_zone = "zone"+index_str
+                zones_folder.append(current_zone)
+                zone_path = os.path.join(scene_path, current_zone)
 
-            with open(os.path.join(zone_path, cfg.seuil_expe_filename)) as f:
-                zones_threshold.append(int(f.readline()))
+                with open(os.path.join(zone_path, cfg.seuil_expe_filename)) as f:
+                    zones_threshold.append(int(f.readline()))
 
-            # custom path for feature
-            feature_path = os.path.join(zone_path, transformation.getName())
+                # custom path for feature
+                feature_path = os.path.join(zone_path, transformation.getName())
 
-            if not os.path.exists(feature_path):
-                os.makedirs(feature_path)
+                if not os.path.exists(feature_path):
+                    os.makedirs(feature_path)
 
-            # custom path for interval of reconstruction and feature
-            feature_interval_path = os.path.join(zone_path, transformation.getTransformationPath())
-            features_folder.append(feature_interval_path)
+                # custom path for interval of reconstruction and feature
+                feature_interval_path = os.path.join(zone_path, transformation.getTransformationPath())
+                features_folder.append(feature_interval_path)
 
-            if not os.path.exists(feature_interval_path):
-                os.makedirs(feature_interval_path)
+                if not os.path.exists(feature_interval_path):
+                    os.makedirs(feature_interval_path)
 
-            # create for each zone the labels folder
-            labels = [cfg.not_noisy_folder, cfg.noisy_folder]
+                # create for each zone the labels folder
+                labels = [cfg.not_noisy_folder, cfg.noisy_folder]
 
-            for label in labels:
-                label_folder = os.path.join(feature_interval_path, label)
+                for label in labels:
+                    label_folder = os.path.join(feature_interval_path, label)
 
-                if not os.path.exists(label_folder):
-                    os.makedirs(label_folder)
+                    if not os.path.exists(label_folder):
+                        os.makedirs(label_folder)
 
-        # get all images of folder
-        scene_images = sorted([os.path.join(scene_path, img) for img in os.listdir(scene_path) if cfg.scene_image_extension in img])
-        number_scene_image = len(scene_images)
+            # get all images of folder
+            scene_images = sorted([os.path.join(scene_path, img) for img in os.listdir(scene_path) if cfg.scene_image_extension in img])
+            number_scene_image = len(scene_images)
 
-        # for each images
-        for id_img, img_path in enumerate(scene_images):
+            # for each images
+            for id_img, img_path in enumerate(scene_images):
 
-            current_img = Image.open(img_path)
-            img_blocks = divide_in_blocks(current_img, cfg.keras_img_size)
+                current_img = Image.open(img_path)
+                img_blocks = divide_in_blocks(current_img, cfg.sub_image_size)
 
-            current_quality_index = int(get_scene_image_quality(img_path))
+                current_quality_index = int(get_scene_image_quality(img_path))
 
-            for id_block, block in enumerate(img_blocks):
+                for id_block, block in enumerate(img_blocks):
 
-                ##########################
-                # Image computation part #
-                ##########################
-                
-                # pass block to grey level
-                output_block = transformation.getTransformedImage(block)
-                output_block = np.array(output_block, 'uint8')
-                
-                # current output image
-                output_block_img = Image.fromarray(output_block)
+                    ##########################
+                    # Image computation part #
+                    ##########################
+                    
+                    # pass block to grey level
+                    output_block = transformation.getTransformedImage(block)
+                    output_block = np.array(output_block, 'uint8')
+                    
+                    # current output image
+                    output_block_img = Image.fromarray(output_block)
 
-                label_path = features_folder[id_block]
+                    label_path = features_folder[id_block]
 
-                # get label folder for block
-                if current_quality_index > zones_threshold[id_block]:
-                    label_path = os.path.join(label_path, cfg.not_noisy_folder)
-                else:
-                    label_path = os.path.join(label_path, cfg.noisy_folder)
+                    # get label folder for block
+                    if current_quality_index > zones_threshold[id_block]:
+                        label_path = os.path.join(label_path, cfg.not_noisy_folder)
+                    else:
+                        label_path = os.path.join(label_path, cfg.noisy_folder)
 
-                # Data augmentation!
-                rotations = [0, 90, 180, 270]
-                img_flip_labels = ['original', 'horizontal', 'vertical', 'both']
+                    # Data augmentation!
+                    rotations = [0, 90, 180, 270]
+                    img_flip_labels = ['original', 'horizontal', 'vertical', 'both']
 
-                horizontal_img = output_block_img.transpose(Image.FLIP_LEFT_RIGHT)
-                vertical_img = output_block_img.transpose(Image.FLIP_TOP_BOTTOM)
-                both_img = output_block_img.transpose(Image.TRANSPOSE)
+                    horizontal_img = output_block_img.transpose(Image.FLIP_LEFT_RIGHT)
+                    vertical_img = output_block_img.transpose(Image.FLIP_TOP_BOTTOM)
+                    both_img = output_block_img.transpose(Image.TRANSPOSE)
 
-                flip_images = [output_block_img, horizontal_img, vertical_img, both_img]
+                    flip_images = [output_block_img, horizontal_img, vertical_img, both_img]
 
-                # rotate and flip image to increase dataset size
-                for id, flip in enumerate(flip_images):
-                    for rotation in rotations:
-                        rotated_output_img = flip.rotate(rotation)
+                    # rotate and flip image to increase dataset size
+                    for id, flip in enumerate(flip_images):
+                        for rotation in rotations:
+                            rotated_output_img = flip.rotate(rotation)
 
-                        output_reconstructed_filename = img_path.split('/')[-1].replace('.png', '') + '_' + zones_folder[id_block] + cfg.post_image_name_separator
-                        output_reconstructed_filename = output_reconstructed_filename + img_flip_labels[id] + '_' + str(rotation) + '.png'
-                        output_reconstructed_path = os.path.join(label_path, output_reconstructed_filename)
+                            output_reconstructed_filename = img_path.split('/')[-1].replace('.png', '') + '_' + zones_folder[id_block] + cfg.post_image_name_separator
+                            output_reconstructed_filename = output_reconstructed_filename + img_flip_labels[id] + '_' + str(rotation) + '.png'
+                            output_reconstructed_path = os.path.join(label_path, output_reconstructed_filename)
 
-                        rotated_output_img.save(output_reconstructed_path)
+                            rotated_output_img.save(output_reconstructed_path)
 
-            print(transformation.getName() + "_" + folder_scene + " - " + "{0:.2f}".format(((id_img + 1) / number_scene_image)* 100.) + "%")
-            sys.stdout.write("\033[F")
+                print(transformation.getName() + "_" + folder_scene + " - " + "{0:.2f}".format(((id_img + 1) / number_scene_image)* 100.) + "%")
+                sys.stdout.write("\033[F")
 
-        print('\n')
+            print('\n')
 
     print("%s_%s : end of data generation\n" % (transformation.getName(), transformation.getParam()))
 
@@ -171,13 +172,23 @@ def main():
                                 help="specific size of image", 
                                 default='100, 100',
                                 required=True)
+    parser.add_argument('--scenes', type=str, help='List of scenes to use for training data')
 
     args = parser.parse_args()
 
     p_features  = list(map(str.strip, args.features.split(',')))
     p_params    = list(map(str.strip, args.params.split('::')))
     p_size      = args.size
+    p_scenes    = args.scenes.split(',')
 
+    # getting scenes from indexes user selection
+    scenes_selected = []
+
+    for scene_id in p_scenes:
+        index = scenes_indices.index(scene_id.strip())
+        scenes_selected.append(scenes_list[index])
+
+    # list of transformations
     transformations = []
 
     for id, feature in enumerate(p_features):
@@ -187,9 +198,10 @@ def main():
 
         transformations.append(Transformation(feature, p_params[id], p_size))
 
+    print("Scenes used", scenes_selected)
     # generate all or specific feature data
     for transformation in transformations:
-        generate_data(transformation)
+        generate_data(transformation, scenes_selected)
 
 if __name__== "__main__":
     main()
