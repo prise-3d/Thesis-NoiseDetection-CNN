@@ -169,11 +169,11 @@ def main():
         print("Restart from epoch ", last_epoch)
 
     # concatenate train and validation data (`validation_split` param will do the separation into keras model)
-    y_data = y_dataset_train.values + y_dataset_val.values
-    x_data = x_data_train + y_data_train
+    y_data = np.concatenate([y_dataset_train.values, y_dataset_val.values])
+    x_data = np.concatenate([x_data_train, x_data_val])
 
     # validation split parameter will use the last `%` data, so here, data will really validate our model
-    model.fit(x_data_train, y_dataset_train.values, validation_split=validation_split, initial_epoch=initial_epoch, epochs=p_epochs, batch_size=p_batch_size, callbacks=callbacks_list)
+    model.fit(x_data, y_data, validation_split=validation_split, initial_epoch=initial_epoch, epochs=p_epochs, batch_size=p_batch_size, callbacks=callbacks_list)
 
     score = model.evaluate(x_data_val, y_dataset_val, batch_size=p_batch_size)
 
