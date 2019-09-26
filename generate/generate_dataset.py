@@ -235,7 +235,6 @@ def main():
     p_scenes   = args.scenes.split(',')
     p_size     = args.size # not necessary to split here
     p_nb_zones = args.nb_zones
-    p_renderer = args.renderer
     p_random   = args.random
 
     # create list of Transformation
