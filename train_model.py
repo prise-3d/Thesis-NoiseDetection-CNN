@@ -111,8 +111,10 @@ def main():
     final_df_val_size = len(final_df_val.index)
 
     validation_split = final_df_val_size / (final_df_train_size + final_df_val_size)
+    print("----------------------------------------------------------")
     print("Validation size is based of `.val` content")
-    print("Validation split is now set at", )
+    print("Validation split is now set at", validation_split)
+    print("----------------------------------------------------------")
 
     # use of the whole data set for training
     x_dataset_train = final_df_train.ix[:,1:]
