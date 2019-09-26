@@ -17,3 +17,5 @@ dataset
 models_info
 results
 models_backup
+oar.sh
+params.txt
