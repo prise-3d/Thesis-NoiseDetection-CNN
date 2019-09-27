@@ -152,7 +152,7 @@ def main():
         os.makedirs(model_backup_folder)
 
     # add of callback models
-    filepath = os.path.join(cfg.backup_model_folder, p_output, p_output + "-{val_auc:02f}__{epoch:02d}.hdf5")
+    filepath = os.path.join(cfg.backup_model_folder, p_output, p_output + "-{auc:02f}-{val_auc:02f}__{epoch:02d}.hdf5")
     checkpoint = ModelCheckpoint(filepath, monitor='val_auc', verbose=1, save_best_only=True, mode='max')
     callbacks_list = [checkpoint]
 
