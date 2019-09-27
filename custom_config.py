@@ -13,7 +13,7 @@ backup_model_folder             = 'models_backup'
 
 # file or extensions
 
-perf_prediction_model_path      = 'predications_models_results.csv'
+perf_prediction_model_path      = 'predictions_models_results.csv'
 ## post_image_name_separator       = '___'
 
 # variables

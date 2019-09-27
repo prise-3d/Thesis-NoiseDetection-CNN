@@ -99,9 +99,7 @@ def main():
         model.load_weights(p_model_file.replace('.json', '.h5'))
 
         model.compile(loss='binary_crossentropy',
-                    optimizer='rmsprop',
-                    features=['accuracy'])
-
+                    optimizer='rmsprop')
 
     # Get results obtained from model
     y_data_prediction = model.predict(x_data)
