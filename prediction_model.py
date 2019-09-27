@@ -77,8 +77,8 @@ def main():
     dataset[1] = dataset[1].apply(lambda x: np.array(x).reshape(input_shape))
 
     # use of the whole data set for training
-    x_dataset = dataset.ix[:,1:]
-    y_dataset = dataset.ix[:,0]
+    x_dataset = dataset.iloc[:,1:]
+    y_dataset = dataset.iloc[:,0]
 
     x_data = []
     for item in x_dataset.values:
@@ -125,7 +125,7 @@ def main():
 
     # add information into file
     with open(perf_file_path, 'a') as f:
-        line = p_data_file + ';' + p_model_file + ';' + str(acc_score) + ';' + str(f1_data_score) + ';' + str(recall_data_score) + ';' + str(pres_score) + ';' + str(roc_score)
+        line = p_data_file + ';' + str(len(dataset)) + ';' + p_model_file + ';' + str(acc_score) + ';' + str(f1_data_score) + ';' + str(recall_data_score) + ';' + str(pres_score) + ';' + str(roc_score) + ';\n'
         f.write(line)
 
 if __name__== "__main__":

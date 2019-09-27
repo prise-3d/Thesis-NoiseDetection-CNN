@@ -31,6 +31,7 @@ def main():
     parser.add_argument('--tl', type=int, help='use or not of transfer learning (`VGG network`)', default=0, choices=[0, 1])
     parser.add_argument('--batch_size', type=int, help='batch size used as model input', default=cfg.keras_batch)
     parser.add_argument('--epochs', type=int, help='number of epochs used for training model', default=cfg.keras_epochs)
+    parser.add_argument('--balancing', type=int, help='specify if balacing of classes is done or not', default="1")
     #parser.add_argument('--val_size', type=float, help='percent of validation data during training process', default=cfg.val_dataset_size)
 
 
@@ -41,6 +42,8 @@ def main():
     p_tl          = args.tl
     p_batch_size  = args.batch_size
     p_epochs      = args.epochs
+    p_balancing   = bool(args.balancing)
+
     #p_val_size    = args.val_size
     initial_epoch = 0
         
@@ -79,29 +82,35 @@ def main():
         else:
             input_shape = (img_width, img_height, n_channels)
 
-    # `:` is the separator used for getting each img path
-    if n_channels > 1:
-        dataset_train[1] = dataset_train[1].apply(lambda x: [cv2.imread(path, cv2.IMREAD_GRAYSCALE) for path in x.split('::')])
-        dataset_val[1] = dataset_val[1].apply(lambda x: [cv2.imread(path, cv2.IMREAD_GRAYSCALE) for path in x.split('::')])
+    # get dataset with equal number of classes occurences if wished
+    if p_balancing:
+        print("Balancing of data")
+        noisy_df_train = dataset_train[dataset_train.iloc[:, 0] == 1]
+        not_noisy_df_train = dataset_train[dataset_train.iloc[:, 0] == 0]
+        nb_noisy_train = len(noisy_df_train.index)
+
+        noisy_df_val = dataset_val[dataset_val.iloc[:, 0] == 1]
+        not_noisy_df_val = dataset_val[dataset_val.iloc[:, 0] == 0]
+        nb_noisy_val = len(noisy_df_val.index)
+
+        final_df_train = pd.concat([not_noisy_df_train[0:nb_noisy_train], noisy_df_train])
+        final_df_val = pd.concat([not_noisy_df_val[0:nb_noisy_val], noisy_df_val])
     else:
-        dataset_train[1] = dataset_train[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE))
-        dataset_val[1] = dataset_val[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE))
+        print("No balancing of data")
+        final_df_train = dataset_train
+        final_df_val = dataset_val
+
+        # `:` is the separator used for getting each img path
+    if n_channels > 1:
+        final_df_train[1] = final_df_train[1].apply(lambda x: [cv2.imread(path, cv2.IMREAD_GRAYSCALE) for path in x.split('::')])
+        final_df_val[1] = final_df_val[1].apply(lambda x: [cv2.imread(path, cv2.IMREAD_GRAYSCALE) for path in x.split('::')])
+    else:
+        final_df_train[1] = final_df_train[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE))
+        final_df_val[1] = final_df_val[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE))
 
     # reshape array data
-    dataset_train[1] = dataset_train[1].apply(lambda x: np.array(x).reshape(input_shape))
-    dataset_val[1] = dataset_val[1].apply(lambda x: np.array(x).reshape(input_shape))
-
-    # get dataset with equal number of classes occurences
-    noisy_df_train = dataset_train[dataset_train.ix[:, 0] == 1]
-    not_noisy_df_train = dataset_train[dataset_train.ix[:, 0] == 0]
-    nb_noisy_train = len(noisy_df_train.index)
-
-    noisy_df_val = dataset_val[dataset_val.ix[:, 0] == 1]
-    not_noisy_df_val = dataset_val[dataset_val.ix[:, 0] == 0]
-    nb_noisy_val = len(noisy_df_val.index)
-
-    final_df_train = pd.concat([not_noisy_df_train[0:nb_noisy_train], noisy_df_train])
-    final_df_val = pd.concat([not_noisy_df_val[0:nb_noisy_val], noisy_df_val])
+    final_df_train[1] = final_df_train[1].apply(lambda x: np.array(x).reshape(input_shape))
+    final_df_val[1] = final_df_val[1].apply(lambda x: np.array(x).reshape(input_shape))
 
     # shuffle data another time
     final_df_train = shuffle(final_df_train)
@@ -117,11 +126,11 @@ def main():
     print("----------------------------------------------------------")
 
     # use of the whole data set for training
-    x_dataset_train = final_df_train.ix[:,1:]
-    x_dataset_val = final_df_val.ix[:,1:]
+    x_dataset_train = final_df_train.iloc[:,1:]
+    x_dataset_val = final_df_val.iloc[:,1:]
 
-    y_dataset_train = final_df_train.ix[:,0]
-    y_dataset_val = final_df_val.ix[:,0]
+    y_dataset_train = final_df_train.iloc[:,0]
+    y_dataset_val = final_df_val.iloc[:,0]
 
     x_data_train = []
     for item in x_dataset_train.values:
@@ -156,21 +165,36 @@ def main():
     checkpoint = ModelCheckpoint(filepath, monitor='val_auc', verbose=1, save_best_only=True, mode='max')
     callbacks_list = [checkpoint]
 
-    model = models.get_model(n_channels, input_shape, p_tl)
-    model.summary()
-
+    
     # check if backup already exists
+    weights_filepath = None
     backups = sorted(os.listdir(model_backup_folder))
 
     if len(backups) > 0:
-        # TODO : check of initial epoch
-        last_backup = backups[-1]
-        last_epoch = int(last_backup.split('__')[1].replace('.hdf5', ''))
-        initial_epoch = last_epoch
+
+        # retrieve last backup epoch of model 
+        last_model_backup = None
+        max_last_epoch = 0
+
+        for backup in backups:
+
+            last_epoch = int(backup.split('__')[1].replace('.hdf5', ''))
+
+            if last_epoch > max_last_epoch and last_epoch < p_epochs:
+                max_last_epoch = last_epoch
+                last_model_backup = backup
+
+        initial_epoch = max_last_epoch
         print("-------------------------------------------------")
-        print("Previous backup model found with already", last_epoch, "done...")
-        print("Resuming from epoch", str(last_epoch + 1))
+        print("Previous backup model found",  last_model_backup, "with already", initial_epoch, "done...")
+        print("Resuming from epoch", str(initial_epoch + 1))
         print("-------------------------------------------------")
+
+        # load weights
+        weights_filepath = os.path.join(model_backup_folder, last_model_backup)
+
+    model = models.get_model(n_channels, input_shape, p_tl, weights_filepath)
+    model.summary()
 
     # concatenate train and validation data (`validation_split` param will do the separation into keras model)
     y_data = np.concatenate([y_dataset_train.values, y_dataset_val.values])
