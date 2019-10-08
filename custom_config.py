@@ -25,7 +25,7 @@ features_choices_labels         = ['static', 'svd_reconstruction', 'fast_ica_rec
 # parameters
 
 sub_image_size                  = (200, 200)
-keras_epochs                    = 100
+keras_epochs                    = 30
 ## keras_batch                     = 32
 ## val_dataset_size                = 0.2
 

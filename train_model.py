@@ -11,6 +11,7 @@ import keras
 from keras import backend as K
 from keras.callbacks import ModelCheckpoint
 from sklearn.metrics import roc_auc_score, accuracy_score, precision_score, recall_score, f1_score
+from keras.utils import to_categorical
 
 # image processing imports
 import cv2
@@ -184,6 +185,10 @@ def main():
                 max_last_epoch = last_epoch
                 last_model_backup = backup
 
+        if last_model_backup is None:
+            print("Epochs asked is already computer. Noee")
+            sys.exit(1)
+
         initial_epoch = max_last_epoch
         print("-------------------------------------------------")
         print("Previous backup model found",  last_model_backup, "with already", initial_epoch, "done...")
@@ -200,10 +205,14 @@ def main():
     y_data = np.concatenate([y_dataset_train.values, y_dataset_val.values])
     x_data = np.concatenate([x_data_train, x_data_val])
 
-    # validation split parameter will use the last `%` data, so here, data will really validate our model
-    model.fit(x_data, y_data, validation_split=validation_split, initial_epoch=initial_epoch, epochs=p_epochs, batch_size=p_batch_size, callbacks=callbacks_list)
+    y_data_categorical = to_categorical(y_data)
+    #print(y_data_categorical)
 
-    score = model.evaluate(x_data_val, y_dataset_val, batch_size=p_batch_size)
+    # validation split parameter will use the last `%` data, so here, data will really validate our model
+    model.fit(x_data, y_data_categorical, validation_split=validation_split, initial_epoch=initial_epoch, epochs=p_epochs, batch_size=p_batch_size, callbacks=callbacks_list)
+
+    y_dataset_val_categorical = to_categorical(y_dataset_val)
+    score = model.evaluate(x_data_val, y_dataset_val_categorical, batch_size=p_batch_size)
 
     print("Accuracy score on val dataset ", score)
 
@@ -224,8 +233,11 @@ def main():
     y_train_prediction = model.predict(x_data_train)
     y_val_prediction = model.predict(x_data_val)
 
-    y_train_prediction = [1 if x > 0.5 else 0 for x in y_train_prediction]
-    y_val_prediction = [1 if x > 0.5 else 0 for x in y_val_prediction]
+    # y_train_prediction = [1 if x > 0.5 else 0 for x in y_train_prediction]
+    # y_val_prediction = [1 if x > 0.5 else 0 for x in y_val_prediction]
+
+    y_train_prediction = np.argmax(y_train_prediction, axis=1)
+    y_val_prediction = np.argmax(y_val_prediction, axis=1)
 
     acc_train_score = accuracy_score(y_dataset_train, y_train_prediction)
     acc_val_score = accuracy_score(y_dataset_val, y_val_prediction)

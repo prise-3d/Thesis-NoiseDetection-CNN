@@ -17,6 +17,9 @@ from sklearn.metrics import roc_auc_score, accuracy_score, precision_score, reca
 import cv2
 from sklearn.utils import shuffle
 
+import seaborn as sns
+import matplotlib.pyplot as plt
+
 # config imports
 sys.path.insert(0, '') # trick to enable import of main folder module
 
@@ -98,13 +101,13 @@ def main():
         model = model_from_json(json_model)
         model.load_weights(p_model_file.replace('.json', '.h5'))
 
-        model.compile(loss='binary_crossentropy',
-                    optimizer='rmsprop')
+        model.compile(loss='categorical_crossentropy',
+                    optimizer='adam')
 
     # Get results obtained from model
     y_data_prediction = model.predict(x_data)
 
-    y_prediction = [1 if x > 0.5 else 0 for x in y_data_prediction]
+    y_prediction = np.argmax(y_data_prediction, axis=1)
 
     acc_score = accuracy_score(y_dataset, y_prediction)
     f1_data_score = f1_score(y_dataset, y_prediction)

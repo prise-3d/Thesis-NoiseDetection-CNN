@@ -40,10 +40,10 @@ def generate_model_2D(_input_shape, _weights_file=None):
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
 
-    model.add(Dense(120))
-    model.add(Activation('relu'))
-    model.add(BatchNormalization())
-    model.add(Dropout(0.5))
+    # model.add(Dense(120))
+    # model.add(Activation('sigmoid'))
+    # model.add(BatchNormalization())
+    # model.add(Dropout(0.5))
 
     model.add(Dense(80))
     model.add(Activation('relu'))
@@ -60,15 +60,15 @@ def generate_model_2D(_input_shape, _weights_file=None):
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
 
-    model.add(Dense(1))
-    model.add(Activation('sigmoid'))
+    model.add(Dense(2))
+    model.add(Activation('softmax'))
 
     # reload weights if exists
     if _weights_file is not None:
         model.load_weights(_weights_file)
 
-    model.compile(loss='binary_crossentropy',
-                  optimizer='rmsprop',
+    model.compile(loss='categorical_crossentropy',
+                  optimizer='adam',
                   metrics=['accuracy', metrics.auc])
 
     return model
@@ -126,7 +126,7 @@ def generate_model_3D(_input_shape, _weights_file=None):
     if _weights_file is not None:
         model.load_weights(_weights_file)
 
-    model.compile(loss='binary_crossentropy',
+    model.compile(loss='categorical_crossentropy',
                   optimizer='rmsprop',
                   metrics=['accuracy', metrics.auc])
 
