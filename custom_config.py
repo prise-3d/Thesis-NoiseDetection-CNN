@@ -29,4 +29,4 @@ keras_epochs                    = 30
 ## keras_batch                     = 32
 ## val_dataset_size                = 0.2
 
-keras_img_size                  = (96, 96)
+keras_img_size                  = (100, 100)
