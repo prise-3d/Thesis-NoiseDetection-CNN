@@ -19,3 +19,5 @@ results
 models_backup
 oar.sh
 params.txt
+
+analysis/.ipynb_checkpoints
