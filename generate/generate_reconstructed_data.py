@@ -129,13 +129,15 @@ def generate_data(transformation, _scenes):
 
                     # Data augmentation!
                     rotations = [0, 90, 180, 270]
-                    img_flip_labels = ['original', 'horizontal', 'vertical', 'both']
+                    #img_flip_labels = ['original', 'horizontal', 'vertical', 'both']
+                    img_flip_labels = ['original', 'horizontal']
 
                     horizontal_img = output_block_img.transpose(Image.FLIP_LEFT_RIGHT)
-                    vertical_img = output_block_img.transpose(Image.FLIP_TOP_BOTTOM)
-                    both_img = output_block_img.transpose(Image.TRANSPOSE)
+                    #vertical_img = output_block_img.transpose(Image.FLIP_TOP_BOTTOM)
+                    #both_img = output_block_img.transpose(Image.TRANSPOSE)
 
-                    flip_images = [output_block_img, horizontal_img, vertical_img, both_img]
+                    #flip_images = [output_block_img, horizontal_img, vertical_img, both_img]
+                    flip_images = [output_block_img, horizontal_img]
 
                     # rotate and flip image to increase dataset size
                     for id, flip in enumerate(flip_images):
