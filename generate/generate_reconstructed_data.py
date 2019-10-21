@@ -37,7 +37,7 @@ output_data_folder      = cfg.output_data_folder
 
 generic_output_file_svd = '_random.csv'
 
-def generate_data(transformation, _scenes):
+def generate_data(transformation, _scenes, _replace):
     """
     @brief Method which generates all .csv files from scenes
     @return nothing
@@ -111,13 +111,6 @@ def generate_data(transformation, _scenes):
                     ##########################
                     # Image computation part #
                     ##########################
-                    
-                    # pass block to grey level
-                    output_block = transformation.getTransformedImage(block)
-                    output_block = np.array(output_block, 'uint8')
-                    
-                    # current output image
-                    output_block_img = Image.fromarray(output_block)
 
                     label_path = features_folder[id_block]
 
@@ -127,28 +120,56 @@ def generate_data(transformation, _scenes):
                     else:
                         label_path = os.path.join(label_path, cfg.noisy_folder)
 
+                    # check if necessary to compute or not images
                     # Data augmentation!
                     rotations = [0, 90, 180, 270]
+
                     #img_flip_labels = ['original', 'horizontal', 'vertical', 'both']
                     img_flip_labels = ['original', 'horizontal']
 
-                    horizontal_img = output_block_img.transpose(Image.FLIP_LEFT_RIGHT)
-                    #vertical_img = output_block_img.transpose(Image.FLIP_TOP_BOTTOM)
-                    #both_img = output_block_img.transpose(Image.TRANSPOSE)
-
-                    #flip_images = [output_block_img, horizontal_img, vertical_img, both_img]
-                    flip_images = [output_block_img, horizontal_img]
-
+                    output_images_path = []
+                    check_path_exists = []
                     # rotate and flip image to increase dataset size
-                    for id, flip in enumerate(flip_images):
+                    for id, flip_label in enumerate(img_flip_labels):
                         for rotation in rotations:
-                            rotated_output_img = flip.rotate(rotation)
-
                             output_reconstructed_filename = img_path.split('/')[-1].replace('.png', '') + '_' + zones_folder[id_block] + cfg.post_image_name_separator
-                            output_reconstructed_filename = output_reconstructed_filename + img_flip_labels[id] + '_' + str(rotation) + '.png'
+                            output_reconstructed_filename = output_reconstructed_filename + flip_label + '_' + str(rotation) + '.png'
                             output_reconstructed_path = os.path.join(label_path, output_reconstructed_filename)
 
-                            rotated_output_img.save(output_reconstructed_path)
+                            if os.path.exists(output_reconstructed_path):
+                                check_path_exists.append(True)
+                            else:
+                                check_path_exists.append(False)
+
+                            output_images_path.append(output_reconstructed_path)
+
+                    # compute only if not exists or necessary to replace
+                    if _replace or not np.array(check_path_exists).all():
+                        # compute image
+                        # pass block to grey level
+                        output_block = transformation.getTransformedImage(block)
+                        output_block = np.array(output_block, 'uint8')
+                        
+                        # current output image
+                        output_block_img = Image.fromarray(output_block)
+
+                        horizontal_img = output_block_img.transpose(Image.FLIP_LEFT_RIGHT)
+                        #vertical_img = output_block_img.transpose(Image.FLIP_TOP_BOTTOM)
+                        #both_img = output_block_img.transpose(Image.TRANSPOSE)
+
+                        #flip_images = [output_block_img, horizontal_img, vertical_img, both_img]
+                        flip_images = [output_block_img, horizontal_img]
+
+                        # rotate and flip image to increase dataset size
+                        counter_index = 0 # get current path index
+                        for id, flip in enumerate(flip_images):
+                            for rotation in rotations:
+
+                                if _replace or not check_path_exists[counter_index]:
+                                    rotated_output_img = flip.rotate(rotation)
+                                    rotated_output_img.save(output_images_path[counter_index])
+
+                                counter_index +=1
 
                 print(transformation.getName() + "_" + folder_scene + " - " + "{0:.2f}".format(((id_img + 1) / number_scene_image)* 100.) + "%")
                 sys.stdout.write("\033[F")
@@ -175,6 +196,7 @@ def main():
                                 default='100, 100',
                                 required=True)
     parser.add_argument('--scenes', type=str, help='List of scenes to use for training data')
+    parser.add_argument('--replace', type=int, help='replace previous picutre', default=1)
 
     args = parser.parse_args()
 
@@ -182,6 +204,7 @@ def main():
     p_params    = list(map(str.strip, args.params.split('::')))
     p_size      = args.size
     p_scenes    = args.scenes.split(',')
+    p_replace   = bool(args.replace)
 
     # getting scenes from indexes user selection
     scenes_selected = []
@@ -203,7 +226,7 @@ def main():
     print("Scenes used", scenes_selected)
     # generate all or specific feature data
     for transformation in transformations:
-        generate_data(transformation, scenes_selected)
+        generate_data(transformation, scenes_selected, p_replace)
 
 if __name__== "__main__":
     main()
