@@ -89,6 +89,9 @@ List of expected parameter by reconstruction method:
 - **diff_filter:**  Bilateral diff filter
   - Param definition: *window size expected*
   - Example: *"5, 5"*
+- **sobel_based_filter** Sobel based filter
+  - Param definition: *K window size and pixel limite to remove*
+  - Example: *"3, 30"*
 - **static** Use static file to manage (such as z-buffer, normals card...)
   - Param definition: *Name of image of scene need to be in {sceneName}/static/xxxx.png*
   - Example: *"img.png"*
