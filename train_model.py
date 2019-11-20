@@ -33,6 +33,7 @@ def main():
     parser.add_argument('--batch_size', type=int, help='batch size used as model input', default=cfg.keras_batch)
     parser.add_argument('--epochs', type=int, help='number of epochs used for training model', default=cfg.keras_epochs)
     parser.add_argument('--balancing', type=int, help='specify if balacing of classes is done or not', default="1")
+    parser.add_argument('--chanels', type=int, help="given number of chanels if necessary", default=0)
     #parser.add_argument('--val_size', type=float, help='percent of validation data during training process', default=cfg.val_dataset_size)
 
 
@@ -44,6 +45,7 @@ def main():
     p_batch_size  = args.batch_size
     p_epochs      = args.epochs
     p_balancing   = bool(args.balancing)
+    p_chanels     = args.chanels
 
     #p_val_size    = args.val_size
     initial_epoch = 0
@@ -65,23 +67,26 @@ def main():
     print("Reading all images data...")
 
     # getting number of chanel
-    n_channels = len(dataset_train[1][1].split('::'))
-    print("Number of channels : ", n_channels)
+    if p_chanels == 0:
+        n_chanels = len(dataset_train[1][1].split('::'))
+    else:
+        n_chanels = p_chanels
 
+    print("Number of chanels : ", n_chanels)
     img_width, img_height = cfg.keras_img_size
 
     # specify the number of dimensions
-    if K.image_data_format() == 'channels_first':
-        if n_channels > 1:
-            input_shape = (1, n_channels, img_width, img_height)
+    if K.image_data_format() == 'chanels_first':
+        if n_chanels > 1:
+            input_shape = (1, n_chanels, img_width, img_height)
         else:
-            input_shape = (n_channels, img_width, img_height)
+            input_shape = (n_chanels, img_width, img_height)
 
     else:
-        if n_channels > 1:
-            input_shape = (1, img_width, img_height, n_channels)
+        if n_chanels > 1:
+            input_shape = (1, img_width, img_height, n_chanels)
         else:
-            input_shape = (img_width, img_height, n_channels)
+            input_shape = (img_width, img_height, n_chanels)
 
     # get dataset with equal number of classes occurences if wished
     if p_balancing:
@@ -101,13 +106,18 @@ def main():
         final_df_train = dataset_train
         final_df_val = dataset_val
 
-        # `:` is the separator used for getting each img path
-    if n_channels > 1:
-        final_df_train[1] = final_df_train[1].apply(lambda x: [cv2.imread(path, cv2.IMREAD_GRAYSCALE) for path in x.split('::')])
-        final_df_val[1] = final_df_val[1].apply(lambda x: [cv2.imread(path, cv2.IMREAD_GRAYSCALE) for path in x.split('::')])
+    # check if specific number of chanels is used
+    if p_chanels == 0:
+        # `::` is the separator used for getting each img path
+        if n_chanels > 1:
+            final_df_train[1] = final_df_train[1].apply(lambda x: [cv2.imread(path, cv2.IMREAD_GRAYSCALE) for path in x.split('::')])
+            final_df_val[1] = final_df_val[1].apply(lambda x: [cv2.imread(path, cv2.IMREAD_GRAYSCALE) for path in x.split('::')])
+        else:
+            final_df_train[1] = final_df_train[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE))
+            final_df_val[1] = final_df_val[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE))
     else:
-        final_df_train[1] = final_df_train[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE))
-        final_df_val[1] = final_df_val[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE))
+        final_df_train[1] = final_df_train[1].apply(lambda x: cv2.imread(x))
+        final_df_val[1] = final_df_val[1].apply(lambda x: cv2.imread(x))
 
     # reshape array data
     final_df_train[1] = final_df_train[1].apply(lambda x: np.array(x).reshape(input_shape))
@@ -198,7 +208,7 @@ def main():
         # load weights
         weights_filepath = os.path.join(model_backup_folder, last_model_backup)
 
-    model = models.get_model(n_channels, input_shape, p_tl, weights_filepath)
+    model = models.get_model(n_chanels, input_shape, p_tl, weights_filepath)
     model.summary()
 
     # concatenate train and validation data (`validation_split` param will do the separation into keras model)
