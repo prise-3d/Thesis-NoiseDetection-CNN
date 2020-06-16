@@ -34,6 +34,7 @@ def main():
     parser.add_argument('--epochs', type=int, help='number of epochs used for training model', default=cfg.keras_epochs)
     parser.add_argument('--balancing', type=int, help='specify if balacing of classes is done or not', default="1")
     parser.add_argument('--chanels', type=int, help="given number of chanels if necessary", default=0)
+    parser.add_argument('--size', type=str, help="Size of input images", default="100, 100")
     #parser.add_argument('--val_size', type=float, help='percent of validation data during training process', default=cfg.val_dataset_size)
 
 
@@ -46,10 +47,11 @@ def main():
     p_epochs      = args.epochs
     p_balancing   = bool(args.balancing)
     p_chanels     = args.chanels
+    p_size        = args.size.split(',')
 
     #p_val_size    = args.val_size
     initial_epoch = 0
-        
+
     ########################
     # 1. Get and prepare data
     ########################
@@ -73,7 +75,8 @@ def main():
         n_chanels = p_chanels
 
     print("Number of chanels : ", n_chanels)
-    img_width, img_height = cfg.keras_img_size
+    img_width, img_height = [ int(s) for s in p_size ]
+    print(img_width, img_height)
 
     # specify the number of dimensions
     if K.image_data_format() == 'chanels_first':
@@ -208,6 +211,7 @@ def main():
         # load weights
         weights_filepath = os.path.join(model_backup_folder, last_model_backup)
 
+    print(n_chanels)
     model = models.get_model(n_chanels, input_shape, p_tl, weights_filepath)
     model.summary()
 
