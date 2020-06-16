@@ -119,7 +119,7 @@ def generate_model_3D(_input_shape, _weights_file=None):
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
 
-    model.add(Dense(1))
+    model.add(Dense(2))
     model.add(Activation('sigmoid'))
 
     # reload weights if exists

@@ -1,11 +1,18 @@
 from modules.config.cnn_config import *
 
+import os
+
 # store all variables from cnn config
 context_vars = vars()
 
 # Custom config used for redefined config variables if necessary
 
 # folders
+
+output_data_folder              = 'data'
+output_data_generated           = os.path.join(output_data_folder, 'generated')
+output_datasets                 = os.path.join(output_data_folder, 'datasets')
+output_zones_learned            = os.path.join(output_data_folder, 'learned_zones')
 
 ## noisy_folder                    = 'noisy'
 ## not_noisy_folder                = 'notNoisy'
@@ -29,4 +36,4 @@ keras_epochs                    = 30
 ## keras_batch                     = 32
 ## val_dataset_size                = 0.2
 
-keras_img_size                  = (100, 100)
+keras_img_size                  = (200, 200)
