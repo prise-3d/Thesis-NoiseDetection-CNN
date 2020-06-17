@@ -76,7 +76,6 @@ def main():
 
     print("Number of chanels : ", n_chanels)
     img_width, img_height = [ int(s) for s in p_size ]
-    print(img_width, img_height)
 
     # specify the number of dimensions
     if K.image_data_format() == 'chanels_first':
@@ -175,8 +174,8 @@ def main():
         os.makedirs(model_backup_folder)
 
     # add of callback models
-    filepath = os.path.join(cfg.backup_model_folder, p_output, p_output + "-{auc:02f}-{val_auc:02f}__{epoch:02d}.hdf5")
-    checkpoint = ModelCheckpoint(filepath, monitor='val_auc', verbose=1, save_best_only=True, mode='max')
+    filepath = os.path.join(cfg.backup_model_folder, p_output, p_output + "-{accuracy:02f}-{val_accuracy:02f}__{epoch:02d}.hdf5")
+    checkpoint = ModelCheckpoint(filepath, monitor='val_accuracy', verbose=1, save_best_only=True, mode='max')
     callbacks_list = [checkpoint]
 
     

@@ -132,37 +132,38 @@ def generate_data(transformation, _dataset_path, _output, _human_thresholds, _re
                         label_path = os.path.join(label_path, cfg.noisy_folder)
 
                     # check if necessary to compute or not images
+                    # Disable use of data augmentation for the moment
                     # Data augmentation!
-                    rotations = [0, 90, 180, 270]
+                    # rotations = [0, 90, 180, 270]
 
                     #img_flip_labels = ['original', 'horizontal', 'vertical', 'both']
-                    img_flip_labels = ['original', 'horizontal']
+                    # img_flip_labels = ['original', 'horizontal']
 
-                    output_images_path = []
-                    check_path_exists = []
-                    # rotate and flip image to increase dataset size
-                    for id, flip_label in enumerate(img_flip_labels):
-                        for rotation in rotations:
-                            output_reconstructed_filename = img_path.split('/')[-1].replace('.png', '') + '_' + zones_folder[id_block] + cfg.post_image_name_separator
-                            output_reconstructed_filename = output_reconstructed_filename + flip_label + '_' + str(rotation) + '.png'
-                            output_reconstructed_path = os.path.join(label_path, output_reconstructed_filename)
+                    # output_images_path = []
+                    # check_path_exists = []
+                    # # rotate and flip image to increase dataset size
+                    # for id, flip_label in enumerate(img_flip_labels):
+                    #     for rotation in rotations:
+                    #         output_reconstructed_filename = img_path.split('/')[-1].replace('.png', '') + '_' + zones_folder[id_block] + cfg.post_image_name_separator
+                    #         output_reconstructed_filename = output_reconstructed_filename + flip_label + '_' + str(rotation) + '.png'
+                    #         output_reconstructed_path = os.path.join(label_path, output_reconstructed_filename)
 
-                            if os.path.exists(output_reconstructed_path):
-                                check_path_exists.append(True)
-                            else:
-                                check_path_exists.append(False)
+                    #         if os.path.exists(output_reconstructed_path):
+                    #             check_path_exists.append(True)
+                    #         else:
+                    #             check_path_exists.append(False)
 
-                            output_images_path.append(output_reconstructed_path)
+                    #         output_images_path.append(output_reconstructed_path)
 
                     # compute only if not exists or necessary to replace
-                    if _replace or not np.array(check_path_exists).all():
+                    # if _replace or not np.array(check_path_exists).all():
                         # compute image
                         # pass block to grey level
-                        output_block = transformation.getTransformedImage(block)
-                        output_block = np.array(output_block, 'uint8')
+                        # output_block = transformation.getTransformedImage(block)
+                        # output_block = np.array(output_block, 'uint8')
                         
-                        # current output image
-                        output_block_img = Image.fromarray(output_block)
+                        # # current output image
+                        # output_block_img = Image.fromarray(output_block)
 
                         #horizontal_img = output_block_img.transpose(Image.FLIP_LEFT_RIGHT)
                         #vertical_img = output_block_img.transpose(Image.FLIP_TOP_BOTTOM)
@@ -172,18 +173,44 @@ def generate_data(transformation, _dataset_path, _output, _human_thresholds, _re
                         #flip_images = [output_block_img, horizontal_img]
 
                         # Only current image img currenlty
-                        flip_images = [output_block_img]
+                        # flip_images = [output_block_img]
 
-                        # rotate and flip image to increase dataset size
-                        counter_index = 0 # get current path index
-                        for id, flip in enumerate(flip_images):
-                            for rotation in rotations:
+                        # # rotate and flip image to increase dataset size
+                        # counter_index = 0 # get current path index
+                        # for id, flip in enumerate(flip_images):
+                        #     for rotation in rotations:
 
-                                if _replace or not check_path_exists[counter_index]:
-                                    rotated_output_img = flip.rotate(rotation)
-                                    rotated_output_img.save(output_images_path[counter_index])
+                        #         if _replace or not check_path_exists[counter_index]:
+                        #             rotated_output_img = flip.rotate(rotation)
+                        #             rotated_output_img.save(output_images_path[counter_index])
 
-                                counter_index +=1
+                        #         counter_index +=1
+                    
+                    if _replace:
+                        
+                        _, filename = os.path.split(img_path)
+
+                        # build of output image filename
+                        filename = filename.replace('.png', '')
+                        filename_parts = filename.split('_')
+
+                        # get samples : `00XXX`
+                        n_samples = filename_parts[2]
+                        del filename_parts[2]
+
+                        # `p3d_XXXXXX`
+                        output_reconstructed = '_'.join(filename_parts)
+
+                        output_reconstructed_filename = output_reconstructed + '_' + zones_folder[id_block] + '_' + n_samples + '.png'
+                        output_reconstructed_path = os.path.join(label_path, output_reconstructed_filename)
+
+                        output_block = transformation.getTransformedImage(block)
+                        output_block = np.array(output_block, 'uint8')
+                        
+                        # current output image
+                        output_block_img = Image.fromarray(output_block)
+                        output_block_img.save(output_reconstructed_path)
+
 
                 write_progress((id_img + 1) / number_scene_image)
 
