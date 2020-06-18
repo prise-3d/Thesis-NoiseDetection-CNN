@@ -48,8 +48,11 @@ def generate_data_model(_filename, _transformations, _dataset_folder, _selected_
     if not os.path.exists(os.path.join(output_data_folder, _filename)):
         os.makedirs(os.path.join(output_data_folder, _filename))
 
-    train_file_data = []
-    test_file_data  = []
+    train_file = open(output_train_filename, 'w')
+    test_file = open(output_test_filename, 'w')
+
+    # train_file_data = []
+    # test_file_data  = []
 
     # specific number of zones (zones indices)
     zones = np.arange(16)
@@ -178,24 +181,23 @@ def generate_data_model(_filename, _transformations, _dataset_folder, _selected_
                         line = line + '\n'
 
                         if id_zone in train_zones:
-                            train_file_data.append(line)
+                            # train_file_data.append(line)
+                            train_file.write(line)
                         else:
-                            test_file_data.append(line)
+                            # test_file_data.append(line)
+                            test_file.write(line)
 
                         # remove first element (sliding window)
                         del sequence_data[0]
 
-    train_file = open(output_train_filename, 'w')
-    test_file = open(output_test_filename, 'w')
+    # random.shuffle(train_file_data)
+    # random.shuffle(test_file_data)
 
-    random.shuffle(train_file_data)
-    random.shuffle(test_file_data)
+    # for line in train_file_data:
+    #     train_file.write(line)
 
-    for line in train_file_data:
-        train_file.write(line)
-
-    for line in test_file_data:
-        test_file.write(line)
+    # for line in test_file_data:
+    #     test_file.write(line)
 
     train_file.close()
     test_file.close()
