@@ -34,6 +34,7 @@ def main():
     parser.add_argument('--epochs', type=int, help='number of epochs used for training model', default=cfg.keras_epochs)
     parser.add_argument('--balancing', type=int, help='specify if balacing of classes is done or not', default="1")
     parser.add_argument('--chanels', type=int, help="given number of chanels if necessary", default=0)
+    parser.add_argument('--size', type=str, help="Size of input images", default="100, 100")
     #parser.add_argument('--val_size', type=float, help='percent of validation data during training process', default=cfg.val_dataset_size)
 
 
@@ -46,10 +47,11 @@ def main():
     p_epochs      = args.epochs
     p_balancing   = bool(args.balancing)
     p_chanels     = args.chanels
+    p_size        = args.size.split(',')
 
     #p_val_size    = args.val_size
     initial_epoch = 0
-        
+
     ########################
     # 1. Get and prepare data
     ########################
@@ -73,7 +75,7 @@ def main():
         n_chanels = p_chanels
 
     print("Number of chanels : ", n_chanels)
-    img_width, img_height = cfg.keras_img_size
+    img_width, img_height = [ int(s) for s in p_size ]
 
     # specify the number of dimensions
     if K.image_data_format() == 'chanels_first':
@@ -172,8 +174,8 @@ def main():
         os.makedirs(model_backup_folder)
 
     # add of callback models
-    filepath = os.path.join(cfg.backup_model_folder, p_output, p_output + "-{auc:02f}-{val_auc:02f}__{epoch:02d}.hdf5")
-    checkpoint = ModelCheckpoint(filepath, monitor='val_auc', verbose=1, save_best_only=True, mode='max')
+    filepath = os.path.join(cfg.backup_model_folder, p_output, p_output + "-{accuracy:02f}-{val_accuracy:02f}__{epoch:02d}.hdf5")
+    checkpoint = ModelCheckpoint(filepath, monitor='val_accuracy', verbose=1, save_best_only=True, mode='max')
     callbacks_list = [checkpoint]
 
     
@@ -201,13 +203,14 @@ def main():
 
         initial_epoch = max_last_epoch
         print("-------------------------------------------------")
-        print("Previous backup model found",  last_model_backup, "with already", initial_epoch, "done...")
+        print("Previous backup model found",  last_model_backup, "with already", initial_epoch, " epoch(s) done...")
         print("Resuming from epoch", str(initial_epoch + 1))
         print("-------------------------------------------------")
 
         # load weights
         weights_filepath = os.path.join(model_backup_folder, last_model_backup)
 
+    print(n_chanels)
     model = models.get_model(n_chanels, input_shape, p_tl, weights_filepath)
     model.summary()
 
@@ -218,6 +221,7 @@ def main():
     y_data_categorical = to_categorical(y_data)
     #print(y_data_categorical)
 
+    print(x_data.shape)
     # validation split parameter will use the last `%` data, so here, data will really validate our model
     model.fit(x_data, y_data_categorical, validation_split=validation_split, initial_epoch=initial_epoch, epochs=p_epochs, batch_size=p_batch_size, callbacks=callbacks_list)
 
@@ -226,18 +230,12 @@ def main():
 
     print("Accuracy score on val dataset ", score)
 
-    if not os.path.exists(cfg.saved_models_folder):
-        os.makedirs(cfg.saved_models_folder)
+    if not os.path.exists(cfg.output_models):
+        os.makedirs(cfg.output_models)
 
     # save the model into HDF5 file
-    model_output_path = os.path.join(cfg.saved_models_folder, p_output + '.json')
-    json_model_content = model.to_json()
-
-    with open(model_output_path, 'w') as f:
-        print("Model saved into ", model_output_path)
-        json.dump(json_model_content, f, indent=4)
-
-    model.save_weights(model_output_path.replace('.json', '.h5'))
+    model_output_path = os.path.join(cfg.output_models, p_output + '.h5')
+    model.save(model_output_path)
 
     # Get results obtained from model
     y_train_prediction = model.predict(x_data_train)
@@ -265,10 +263,10 @@ def main():
     roc_val_score = roc_auc_score(y_dataset_val, y_val_prediction)
 
     # save model performance
-    if not os.path.exists(cfg.results_information_folder):
-        os.makedirs(cfg.results_information_folder)
+    if not os.path.exists(cfg.output_results_folder):
+        os.makedirs(cfg.output_results_folder)
 
-    perf_file_path = os.path.join(cfg.results_information_folder, cfg.csv_model_comparisons_filename)
+    perf_file_path = os.path.join(cfg.output_results_folder, cfg.csv_model_comparisons_filename)
 
     # write header if necessary
     if not os.path.exists(perf_file_path):

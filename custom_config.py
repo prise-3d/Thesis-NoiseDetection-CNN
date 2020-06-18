@@ -1,5 +1,7 @@
 from modules.config.cnn_config import *
 
+import os
+
 # store all variables from cnn config
 context_vars = vars()
 
@@ -7,13 +9,21 @@ context_vars = vars()
 
 # folders
 
+output_data_folder              = 'data'
+output_data_generated           = os.path.join(output_data_folder, 'generated')
+output_datasets                 = os.path.join(output_data_folder, 'datasets')
+output_zones_learned            = os.path.join(output_data_folder, 'learned_zones')
+output_models                   = os.path.join(output_data_folder, 'saved_models')
+output_results_folder           = os.path.join(output_data_folder, 'results')
+
 ## noisy_folder                    = 'noisy'
 ## not_noisy_folder                = 'notNoisy'
-backup_model_folder             = 'models_backup'
+backup_model_folder             = os.path.join(output_data_folder, 'models_backup')
 
 # file or extensions
 
 perf_prediction_model_path      = 'predictions_models_results.csv'
+results_filename                = 'results.csv'
 ## post_image_name_separator       = '___'
 
 # variables
@@ -29,4 +39,4 @@ keras_epochs                    = 30
 ## keras_batch                     = 32
 ## val_dataset_size                = 0.2
 
-keras_img_size                  = (100, 100)
+keras_img_size                  = (200, 200)

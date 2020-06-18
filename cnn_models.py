@@ -14,7 +14,7 @@ import tensorflow as tf
 sys.path.insert(0, '') # trick to enable import of main folder module
 
 import custom_config as cfg
-from models import metrics
+#from models import metrics
 
 
 def generate_model_2D(_input_shape, _weights_file=None):
@@ -69,7 +69,8 @@ def generate_model_2D(_input_shape, _weights_file=None):
 
     model.compile(loss='categorical_crossentropy',
                   optimizer='adam',
-                  metrics=['accuracy', metrics.auc])
+                  #metrics=['accuracy', metrics.auc])
+                  metrics=['accuracy'])
 
     return model
 
@@ -119,7 +120,7 @@ def generate_model_3D(_input_shape, _weights_file=None):
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
 
-    model.add(Dense(1))
+    model.add(Dense(2))
     model.add(Activation('sigmoid'))
 
     # reload weights if exists
@@ -128,7 +129,8 @@ def generate_model_3D(_input_shape, _weights_file=None):
 
     model.compile(loss='categorical_crossentropy',
                   optimizer='rmsprop',
-                  metrics=['accuracy', metrics.auc])
+                  #metrics=['accuracy', metrics.auc])
+                  metrics=['accuracy'])
 
     return model
 
@@ -203,7 +205,8 @@ def generate_model_3D_TL(_input_shape, _weights_file=None):
 
     model_final.compile(loss='binary_crossentropy',
                   optimizer='rmsprop',
-                  metrics=['accuracy', metrics.auc])
+                #   metrics=['accuracy', metrics.auc])
+                  metrics=['accuracy'])
 
     return model_final
 
@@ -219,5 +222,5 @@ def get_model(n_channels, _input_shape, _tl=False, _weights_file=None):
     if n_channels == 1:
         return generate_model_2D(_input_shape, _weights_file)
 
-    if n_channels == 3:
+    if n_channels >= 2:
         return generate_model_3D(_input_shape, _weights_file)
