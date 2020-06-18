@@ -50,7 +50,7 @@ def build_input(df, seq_norm):
             for img_path in column:
                 img = Image.open(img_path)
                 # seq_elems.append(np.array(img).flatten())
-                seq_elems.append(np.array(img))
+                seq_elems.append(np.array(img) / 255.)
 
             #seq_arr.append(np.array(seq_elems).flatten())
             seq_arr.append(np.array(seq_elems))
