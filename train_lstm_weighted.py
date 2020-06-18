@@ -200,30 +200,30 @@ def main():
     model.summary()
 
     print("Fitting model with custom class_weight", class_weight)
-    history = model.fit(X_train, y_train, batch_size=16, epochs=50, validation_split = 0.30, verbose=1, shuffle=True, class_weight=class_weight)
+    history = model.fit(X_train, y_train, batch_size=16, epochs=3, validation_split = 0.30, verbose=1, shuffle=True, class_weight=class_weight)
 
     # list all data in history
-    print(history.history.keys())
-    # summarize history for accuracy
-    plt.plot(history.history['accuracy'])
-    plt.plot(history.history['val_accuracy'])
-    plt.title('model accuracy')
-    plt.ylabel('accuracy')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
-    plt.show()
-    # summarize history for loss
-    plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
-    plt.title('model loss')
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
-    plt.show()
+    # print(history.history.keys())
+    # # summarize history for accuracy
+    # plt.plot(history.history['accuracy'])
+    # plt.plot(history.history['val_accuracy'])
+    # plt.title('model accuracy')
+    # plt.ylabel('accuracy')
+    # plt.xlabel('epoch')
+    # plt.legend(['train', 'test'], loc='upper left')
+    # plt.show()
+    # # summarize history for loss
+    # plt.plot(history.history['loss'])
+    # plt.plot(history.history['val_loss'])
+    # plt.title('model loss')
+    # plt.ylabel('loss')
+    # plt.xlabel('epoch')
+    # plt.legend(['train', 'test'], loc='upper left')
+    # plt.show()
 
-    train_score, train_acc = model.evaluate(X_train, y_train, batch_size=1)
+    # train_score, train_acc = model.evaluate(X_train, y_train, batch_size=1)
 
-    print(train_acc)
+    # print(train_acc)
     y_train_predict = model.predict_classes(X_train)
     y_test_predict = model.predict_classes(X_test)
     y_all_predict = model.predict_classes(X_all)
@@ -255,6 +255,17 @@ def main():
 
     with open(results_filename, 'a') as f:
         f.write(p_output + ';' + str(acc_train) + ';' + str(auc_train) + ';' + str(acc_test) + ';' + str(auc_test) + '\n')
+
+    # save acc metric information
+    plt.plot(history.history['accuracy'])
+    plt.plot(history.history['val_accuracy'])
+    plt.title('model accuracy')
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+
+    model_history = os.path.join(cfg.output_results_folder, p_output + '.png')
+    plt.savefig(model_history)
 
     # save model using joblib
     if not os.path.exists(cfg.output_models):

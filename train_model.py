@@ -203,7 +203,7 @@ def main():
 
         initial_epoch = max_last_epoch
         print("-------------------------------------------------")
-        print("Previous backup model found",  last_model_backup, "with already", initial_epoch, "done...")
+        print("Previous backup model found",  last_model_backup, "with already", initial_epoch, " epoch(s) done...")
         print("Resuming from epoch", str(initial_epoch + 1))
         print("-------------------------------------------------")
 
@@ -221,6 +221,7 @@ def main():
     y_data_categorical = to_categorical(y_data)
     #print(y_data_categorical)
 
+    print(x_data.shape)
     # validation split parameter will use the last `%` data, so here, data will really validate our model
     model.fit(x_data, y_data_categorical, validation_split=validation_split, initial_epoch=initial_epoch, epochs=p_epochs, batch_size=p_batch_size, callbacks=callbacks_list)
 
@@ -229,18 +230,12 @@ def main():
 
     print("Accuracy score on val dataset ", score)
 
-    if not os.path.exists(cfg.saved_models_folder):
-        os.makedirs(cfg.saved_models_folder)
+    if not os.path.exists(cfg.output_models):
+        os.makedirs(cfg.output_models)
 
     # save the model into HDF5 file
-    model_output_path = os.path.join(cfg.saved_models_folder, p_output + '.json')
-    json_model_content = model.to_json()
-
-    with open(model_output_path, 'w') as f:
-        print("Model saved into ", model_output_path)
-        json.dump(json_model_content, f, indent=4)
-
-    model.save_weights(model_output_path.replace('.json', '.h5'))
+    model_output_path = os.path.join(cfg.output_models, p_output + '.h5')
+    model.save(model_output_path)
 
     # Get results obtained from model
     y_train_prediction = model.predict(x_data_train)
@@ -268,10 +263,10 @@ def main():
     roc_val_score = roc_auc_score(y_dataset_val, y_val_prediction)
 
     # save model performance
-    if not os.path.exists(cfg.results_information_folder):
-        os.makedirs(cfg.results_information_folder)
+    if not os.path.exists(cfg.output_results_folder):
+        os.makedirs(cfg.output_results_folder)
 
-    perf_file_path = os.path.join(cfg.results_information_folder, cfg.csv_model_comparisons_filename)
+    perf_file_path = os.path.join(cfg.output_results_folder, cfg.csv_model_comparisons_filename)
 
     # write header if necessary
     if not os.path.exists(perf_file_path):
