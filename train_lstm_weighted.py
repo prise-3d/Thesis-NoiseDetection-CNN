@@ -117,8 +117,6 @@ def create_model(_input_shape):
 
     model.add(Conv3D(filters=20, kernel_size=(3, 3, 3),
                 activation='sigmoid',
-                dropout=0.4,
-                recurrent_dropout=0.4,
                 padding='same', data_format='channels_last'))
     model.add(Dropout(0.4))
 
