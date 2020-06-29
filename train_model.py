@@ -16,6 +16,7 @@ from keras.utils import to_categorical
 # image processing imports
 import cv2
 from sklearn.utils import shuffle
+from sklearn.model_selection import train_test_split
 
 # config imports
 sys.path.insert(0, '') # trick to enable import of main folder module
@@ -35,7 +36,7 @@ def main():
     parser.add_argument('--balancing', type=int, help='specify if balacing of classes is done or not', default="1")
     parser.add_argument('--chanels', type=int, help="given number of chanels if necessary", default=0)
     parser.add_argument('--size', type=str, help="Size of input images", default="100, 100")
-    #parser.add_argument('--val_size', type=float, help='percent of validation data during training process', default=cfg.val_dataset_size)
+    parser.add_argument('--val_size', type=float, help='percent of validation data during training process', default=0.3)
 
 
     args = parser.parse_args()
@@ -48,6 +49,7 @@ def main():
     p_balancing   = bool(args.balancing)
     p_chanels     = args.chanels
     p_size        = args.size.split(',')
+    p_val_size    = args.val_size
 
     #p_val_size    = args.val_size
     initial_epoch = 0
@@ -57,14 +59,14 @@ def main():
     ########################
     print("Preparing data...")
     dataset_train = pd.read_csv(p_data_file + '.train', header=None, sep=";")
-    dataset_val = pd.read_csv(p_data_file + '.val', header=None, sep=";")
+    dataset_test = pd.read_csv(p_data_file + '.test', header=None, sep=";")
 
     print("Train set size : ", len(dataset_train))
-    print("val set size : ", len(dataset_val))
+    print("Test set size : ", len(dataset_test))
 
     # default first shuffle of data
     dataset_train = shuffle(dataset_train)
-    dataset_val = shuffle(dataset_val)
+    dataset_test = shuffle(dataset_test)
 
     print("Reading all images data...")
 
@@ -97,8 +99,8 @@ def main():
         not_noisy_df_train = dataset_train[dataset_train.iloc[:, 0] == 0]
         nb_noisy_train = len(noisy_df_train.index)
 
-        noisy_df_val = dataset_val[dataset_val.iloc[:, 0] == 1]
-        not_noisy_df_val = dataset_val[dataset_val.iloc[:, 0] == 0]
+        noisy_df_val = dataset_test[dataset_test.iloc[:, 0] == 1]
+        not_noisy_df_val = dataset_test[dataset_test.iloc[:, 0] == 0]
         nb_noisy_val = len(noisy_df_val.index)
 
         final_df_train = pd.concat([not_noisy_df_train[0:nb_noisy_train], noisy_df_train])
@@ -106,44 +108,42 @@ def main():
     else:
         print("No balancing of data")
         final_df_train = dataset_train
-        final_df_val = dataset_val
+        final_df_test = dataset_test
 
     # check if specific number of chanels is used
     if p_chanels == 0:
         # `::` is the separator used for getting each img path
         if n_chanels > 1:
             final_df_train[1] = final_df_train[1].apply(lambda x: [cv2.imread(path, cv2.IMREAD_GRAYSCALE) for path in x.split('::')])
-            final_df_val[1] = final_df_val[1].apply(lambda x: [cv2.imread(path, cv2.IMREAD_GRAYSCALE) for path in x.split('::')])
+            final_df_test[1] = final_df_test[1].apply(lambda x: [cv2.imread(path, cv2.IMREAD_GRAYSCALE) for path in x.split('::')])
         else:
             final_df_train[1] = final_df_train[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE))
-            final_df_val[1] = final_df_val[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE))
+            final_df_test[1] = final_df_test[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE))
     else:
         final_df_train[1] = final_df_train[1].apply(lambda x: cv2.imread(x))
-        final_df_val[1] = final_df_val[1].apply(lambda x: cv2.imread(x))
+        final_df_test[1] = final_df_test[1].apply(lambda x: cv2.imread(x))
 
     # reshape array data
     final_df_train[1] = final_df_train[1].apply(lambda x: np.array(x).reshape(input_shape))
-    final_df_val[1] = final_df_val[1].apply(lambda x: np.array(x).reshape(input_shape))
+    final_df_test[1] = final_df_test[1].apply(lambda x: np.array(x).reshape(input_shape))
 
     # shuffle data another time
     final_df_train = shuffle(final_df_train)
-    final_df_val = shuffle(final_df_val)
+    final_df_test = shuffle(final_df_test)
 
     final_df_train_size = len(final_df_train.index)
-    final_df_val_size = len(final_df_val.index)
+    final_df_test_size = len(final_df_test.index)
 
-    validation_split = final_df_val_size / (final_df_train_size + final_df_val_size)
     print("----------------------------------------------------------")
-    print("Validation size is based of `.val` content")
-    print("Validation split is now set at", validation_split)
+    print("Validation split is now set at", p_val_size)
     print("----------------------------------------------------------")
 
     # use of the whole data set for training
     x_dataset_train = final_df_train.iloc[:,1:]
-    x_dataset_val = final_df_val.iloc[:,1:]
+    x_dataset_test = final_df_test.iloc[:,1:]
 
     y_dataset_train = final_df_train.iloc[:,0]
-    y_dataset_val = final_df_val.iloc[:,0]
+    y_dataset_test = final_df_test.iloc[:,0]
 
     x_data_train = []
     for item in x_dataset_train.values:
@@ -152,17 +152,17 @@ def main():
 
     x_data_train = np.array(x_data_train)
 
-    x_data_val = []
-    for item in x_dataset_val.values:
+    x_data_test = []
+    for item in x_dataset_test.values:
         #print("Item is here", item)
-        x_data_val.append(item[0])
+        x_data_test.append(item[0])
 
-    x_data_val = np.array(x_data_val)
+    x_data_test = np.array(x_data_test)
 
     print("End of loading data..")
 
     print("Train set size (after balancing) : ", final_df_train_size)
-    print("val set size (after balancing) : ", final_df_val_size)
+    print("Test set size (after balancing) : ", final_df_test_size)
 
     #######################
     # 2. Getting model
@@ -191,7 +191,7 @@ def main():
 
         for backup in backups:
 
-            last_epoch = int(backup.split('__')[1].replace('.hdf5', ''))
+            last_epoch = int(backup.split('__')[1].replace('.h5', ''))
 
             if last_epoch > max_last_epoch and last_epoch < p_epochs:
                 max_last_epoch = last_epoch
@@ -214,19 +214,17 @@ def main():
     model = models.get_model(n_chanels, input_shape, p_tl, weights_filepath)
     model.summary()
 
-    # concatenate train and validation data (`validation_split` param will do the separation into keras model)
-    y_data = np.concatenate([y_dataset_train.values, y_dataset_val.values])
-    x_data = np.concatenate([x_data_train, x_data_val])
+    # prepare train and validation dataset
+    X_train, X_val, y_train, y_val = train_test_split(x_data_train, y_dataset_train, test_size=p_val_size, shuffle=False)
 
-    y_data_categorical = to_categorical(y_data)
-    #print(y_data_categorical)
+    y_train = to_categorical(y_train)
+    y_val = to_categorical(y_val)
+    y_test = to_categorical(y_dataset_test)
 
-    print(x_data.shape)
     # validation split parameter will use the last `%` data, so here, data will really validate our model
-    model.fit(x_data, y_data_categorical, validation_split=validation_split, initial_epoch=initial_epoch, epochs=p_epochs, batch_size=p_batch_size, callbacks=callbacks_list)
+    model.fit(X_train, y_train, validation_data=(X_val, y_val), initial_epoch=initial_epoch, epochs=p_epochs, batch_size=p_batch_size, callbacks=callbacks_list)
 
-    y_dataset_val_categorical = to_categorical(y_dataset_val)
-    score = model.evaluate(x_data_val, y_dataset_val_categorical, batch_size=p_batch_size)
+    score = model.evaluate(X_val, y_val, batch_size=p_batch_size)
 
     print("Accuracy score on val dataset ", score)
 
@@ -238,8 +236,9 @@ def main():
     model.save(model_output_path)
 
     # Get results obtained from model
-    y_train_prediction = model.predict(x_data_train)
-    y_val_prediction = model.predict(x_data_val)
+    y_train_prediction = model.predict(X_train)
+    y_val_prediction = model.predict(X_val)
+    y_test_prediction = model.predict(x_dataset_test)
 
     # y_train_prediction = [1 if x > 0.5 else 0 for x in y_train_prediction]
     # y_val_prediction = [1 if x > 0.5 else 0 for x in y_val_prediction]
@@ -247,20 +246,13 @@ def main():
     y_train_prediction = np.argmax(y_train_prediction, axis=1)
     y_val_prediction = np.argmax(y_val_prediction, axis=1)
 
-    acc_train_score = accuracy_score(y_dataset_train, y_train_prediction)
-    acc_val_score = accuracy_score(y_dataset_val, y_val_prediction)
+    acc_train_score = accuracy_score(y_train, y_train_prediction)
+    acc_val_score = accuracy_score(y_val, y_val_prediction)
+    acc_test_score = accuracy_score(y_test, y_test_prediction)
 
-    f1_train_score = f1_score(y_dataset_train, y_train_prediction)
-    f1_val_score = f1_score(y_dataset_val, y_val_prediction)
-
-    recall_train_score = recall_score(y_dataset_train, y_train_prediction)
-    recall_val_score = recall_score(y_dataset_val, y_val_prediction)
-
-    pres_train_score = precision_score(y_dataset_train, y_train_prediction)
-    pres_val_score = precision_score(y_dataset_val, y_val_prediction)
-
-    roc_train_score = roc_auc_score(y_dataset_train, y_train_prediction)
-    roc_val_score = roc_auc_score(y_dataset_val, y_val_prediction)
+    roc_train_score = roc_auc_score(y_train, y_train_prediction)
+    roc_val_score = roc_auc_score(y_val, y_val_prediction)
+    roc_test_score = roc_auc_score(y_test, y_val_prediction)
 
     # save model performance
     if not os.path.exists(cfg.output_results_folder):
@@ -271,17 +263,13 @@ def main():
     # write header if necessary
     if not os.path.exists(perf_file_path):
         with open(perf_file_path, 'w') as f:
-            f.write(cfg.perf_train_header_file)
+            f.write('name;train_acc;val_acc;test_acc;train_auc;val_auc;test_auc;\n')
             
     # add information into file
     with open(perf_file_path, 'a') as f:
-        line = p_output + ';' + str(len(dataset_train)) + ';' + str(len(dataset_val)) + ';' \
-                        + str(final_df_train_size) + ';' + str(final_df_val_size) + ';' \
-                        + str(acc_train_score) + ';' + str(acc_val_score) + ';' \
-                        + str(f1_train_score) + ';' + str(f1_val_score) + ';' \
-                        + str(recall_train_score) + ';' + str(recall_val_score) + ';' \
-                        + str(pres_train_score) + ';' + str(pres_val_score) + ';' \
-                        + str(roc_train_score) + ';' + str(roc_val_score) + '\n'
+        line = p_output + ';' + str(acc_train_score) + ';' + str(acc_val_score) + ';' \
+                        + str(acc_test_score) + ';' + str(roc_train_score) + ';' \
+                        + str(roc_val_score) + ';' + str(roc_test_score) + '\n'
         f.write(line)
 
     print("You can now run your model with your own `test` dataset")
