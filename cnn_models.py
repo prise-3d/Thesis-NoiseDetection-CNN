@@ -17,19 +17,19 @@ import custom_config as cfg
 #from models import metrics
 
 
-def generate_model_2D(_input_shape, _weights_file=None):
+def generate_model_2D(_input_shape):
 
     model = Sequential()
 
-    model.add(Conv2D(60, (2, 2), input_shape=_input_shape))
+    model.add(Conv2D(140, (3, 3), input_shape=_input_shape))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
 
-    model.add(Conv2D(40, (2, 2)))
+    model.add(Conv2D(70, (3, 3)))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
 
-    model.add(Conv2D(20, (2, 2)))
+    model.add(Conv2D(20, (3, 3)))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
 
@@ -63,10 +63,6 @@ def generate_model_2D(_input_shape, _weights_file=None):
     model.add(Dense(2))
     model.add(Activation('softmax'))
 
-    # reload weights if exists
-    if _weights_file is not None:
-        model.load_weights(_weights_file)
-
     model.compile(loss='categorical_crossentropy',
                   optimizer='adam',
                   #metrics=['accuracy', metrics.auc])
@@ -75,42 +71,37 @@ def generate_model_2D(_input_shape, _weights_file=None):
     return model
 
 
-def generate_model_3D(_input_shape, _weights_file=None):
+def generate_model_3D(_input_shape):
 
     model = Sequential()
 
     print(_input_shape)
 
-    model.add(Conv3D(60, (1, 2, 2), input_shape=_input_shape))
+    model.add(Conv3D(200, (1, 3, 3), input_shape=_input_shape))
     model.add(Activation('relu'))
     model.add(MaxPooling3D(pool_size=(1, 2, 2)))
 
-    model.add(Conv3D(40, (1, 2, 2)))
+    model.add(Conv3D(100, (1, 3, 3)))
     model.add(Activation('relu'))
     model.add(MaxPooling3D(pool_size=(1, 2, 2)))
 
-    model.add(Conv3D(20, (1, 2, 2)))
+    model.add(Conv3D(40, (1, 3, 3)))
     model.add(Activation('relu'))
     model.add(MaxPooling3D(pool_size=(1, 2, 2)))
 
     model.add(Flatten())
 
-    model.add(Dense(140))
+    model.add(Dense(256))
     model.add(Activation('relu'))
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
 
-    model.add(Dense(120))
+    model.add(Dense(128))
     model.add(Activation('relu'))
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
 
-    model.add(Dense(80))
-    model.add(Activation('relu'))
-    model.add(BatchNormalization())
-    model.add(Dropout(0.5))
-
-    model.add(Dense(40))
+    model.add(Dense(64))
     model.add(Activation('relu'))
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
@@ -123,10 +114,6 @@ def generate_model_3D(_input_shape, _weights_file=None):
     model.add(Dense(2))
     model.add(Activation('sigmoid'))
 
-    # reload weights if exists
-    if _weights_file is not None:
-        model.load_weights(_weights_file)
-
     model.compile(loss='categorical_crossentropy',
                   optimizer='rmsprop',
                   #metrics=['accuracy', metrics.auc])
@@ -136,7 +123,7 @@ def generate_model_3D(_input_shape, _weights_file=None):
 
 
 # using transfer learning (VGG19)
-def generate_model_3D_TL(_input_shape, _weights_file=None):
+def generate_model_3D_TL(_input_shape):
 
     # load pre-trained model
     model = VGG19(weights='imagenet', include_top=False, input_shape=_input_shape)
@@ -199,10 +186,6 @@ def generate_model_3D_TL(_input_shape, _weights_file=None):
 
     model_final.summary()
 
-    # reload weights if exists
-    if _weights_file is not None:
-        model.load_weights(_weights_file)
-
     model_final.compile(loss='binary_crossentropy',
                   optimizer='rmsprop',
                 #   metrics=['accuracy', metrics.auc])
@@ -211,16 +194,16 @@ def generate_model_3D_TL(_input_shape, _weights_file=None):
     return model_final
 
 
-def get_model(n_channels, _input_shape, _tl=False, _weights_file=None):
+def get_model(n_channels, _input_shape, _tl=False):
     
     if _tl:
         if n_channels == 3:
-            return generate_model_3D_TL(_input_shape, _weights_file)
+            return generate_model_3D_TL(_input_shape)
         else:
             print("Can't use transfer learning with only 1 channel")
 
     if n_channels == 1:
-        return generate_model_2D(_input_shape, _weights_file)
+        return generate_model_2D(_input_shape)
 
     if n_channels >= 2:
-        return generate_model_3D(_input_shape, _weights_file)
+        return generate_model_3D(_input_shape)

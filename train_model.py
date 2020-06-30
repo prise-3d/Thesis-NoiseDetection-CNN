@@ -8,6 +8,7 @@ import json
 import cnn_models as models
 import tensorflow as tf
 import keras
+from keras.models import load_model
 from keras import backend as K
 from keras.callbacks import ModelCheckpoint
 from sklearn.metrics import roc_auc_score, accuracy_score, precision_score, recall_score, f1_score
@@ -23,12 +24,34 @@ sys.path.insert(0, '') # trick to enable import of main folder module
 
 import custom_config as cfg
 
+# counter param
+n_counter = 0
+
+def write_progress(progress):
+    '''
+    Display progress information as progress bar
+    '''
+    barWidth = 180
+
+    output_str = "["
+    pos = barWidth * progress
+    for i in range(barWidth):
+        if i < pos:
+           output_str = output_str + "="
+        elif i == pos:
+           output_str = output_str + ">"
+        else:
+            output_str = output_str + " "
+
+    output_str = output_str + "] " + str(int(progress * 100.0)) + " %\r"
+    print(output_str)
+    sys.stdout.write("\033[F")
 
 def main():
 
     parser = argparse.ArgumentParser(description="Train Keras model and save it into .json file")
 
-    parser.add_argument('--data', type=str, help='dataset filename prefix (without .train and .val)', required=True)
+    parser.add_argument('--data', type=str, help='dataset filename prefix (without .train and .test)', required=True)
     parser.add_argument('--output', type=str, help='output file name desired for model (without .json extension)', required=True)
     parser.add_argument('--tl', type=int, help='use or not of transfer learning (`VGG network`)', default=0, choices=[0, 1])
     parser.add_argument('--batch_size', type=int, help='batch size used as model input', default=64)
@@ -55,18 +78,20 @@ def main():
     ########################
     # 1. Get and prepare data
     ########################
-    print("Preparing data...")
+    print('-----------------------------')
+    print("----- Preparing data... -----")
     dataset_train = pd.read_csv(p_data_file + '.train', header=None, sep=";")
     dataset_test = pd.read_csv(p_data_file + '.test', header=None, sep=";")
 
-    print("Train set size : ", len(dataset_train))
-    print("Test set size : ", len(dataset_test))
+    print("-- Train set size : ", len(dataset_train))
+    print("-- Test set size : ", len(dataset_test))
 
     # default first shuffle of data
     dataset_train = shuffle(dataset_train)
     dataset_test = shuffle(dataset_test)
 
-    print("Reading all images data...")
+    print('-----------------------------')
+    print("--Reading all images data...")
 
     # getting number of chanel
     if p_chanels == 0:
@@ -74,7 +99,7 @@ def main():
     else:
         n_chanels = p_chanels
 
-    print("Number of chanels : ", n_chanels)
+    print("-- Number of chanels : ", n_chanels)
     img_width, img_height = [ int(s) for s in p_size ]
 
     # specify the number of dimensions
@@ -106,32 +131,58 @@ def main():
 
     total_samples = noisy_samples + not_noisy_samples
 
-    print('noisy', noisy_samples)
-    print('not_noisy', not_noisy_samples)
-    print('total', total_samples)
+    print('-----------------------------')
+    print('---- Dataset information ----')
+    print('-- noisy:', noisy_samples)
+    print('-- not_noisy:', not_noisy_samples)
+    print('-- total:', total_samples)
+    print('-----------------------------')
 
     class_weight = {
         0: (noisy_samples / float(total_samples)),
         1: (not_noisy_samples / float(total_samples)),
     }
 
-
-
     final_df_train = dataset_train
     final_df_test = dataset_test
+    
+    def load_multiple_greyscale(x):
+        # update progress
+        global n_counter
+        n_counter += 1
+        write_progress(n_counter / float(total_samples))
+        return [cv2.imread(path, cv2.IMREAD_GRAYSCALE) for path in x.split('::')]
+
+    def load_greyscale(x):
+        # update progress
+        global n_counter
+        n_counter += 1
+        write_progress(n_counter / float(total_samples))
+        return cv2.imread(x, cv2.IMREAD_GRAYSCALE)
+
+    def load_rgb(x):
+        # update progress
+        global n_counter
+        n_counter += 1
+        write_progress(n_counter / float(total_samples))
+        return cv2.imread(x)
+
+
+    print('---- Loading dataset.... ----')
+    print('-----------------------------\n')
 
     # check if specific number of chanels is used
     if p_chanels == 0:
         # `::` is the separator used for getting each img path
         if n_chanels > 1:
-            final_df_train[1] = final_df_train[1].apply(lambda x: [cv2.imread(path, cv2.IMREAD_GRAYSCALE) for path in x.split('::')])
-            final_df_test[1] = final_df_test[1].apply(lambda x: [cv2.imread(path, cv2.IMREAD_GRAYSCALE) for path in x.split('::')])
+            final_df_train[1] = final_df_train[1].apply(lambda x: load_multiple_greyscale(x))
+            final_df_test[1] = final_df_test[1].apply(lambda x: load_multiple_greyscale(x))
         else:
-            final_df_train[1] = final_df_train[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE))
-            final_df_test[1] = final_df_test[1].apply(lambda x: cv2.imread(x, cv2.IMREAD_GRAYSCALE))
+            final_df_train[1] = final_df_train[1].apply(lambda x: load_greyscale(x))
+            final_df_test[1] = final_df_test[1].apply(lambda x: load_greyscale(x))
     else:
-        final_df_train[1] = final_df_train[1].apply(lambda x: cv2.imread(x))
-        final_df_test[1] = final_df_test[1].apply(lambda x: cv2.imread(x))
+        final_df_train[1] = final_df_train[1].apply(lambda x: load_rgb(x))
+        final_df_test[1] = final_df_test[1].apply(lambda x: load_rgb(x))
 
     # reshape array data
     final_df_train[1] = final_df_train[1].apply(lambda x: np.array(x).reshape(input_shape))
@@ -141,12 +192,9 @@ def main():
     final_df_train = shuffle(final_df_train)
     final_df_test = shuffle(final_df_test)
 
-    final_df_train_size = len(final_df_train.index)
-    final_df_test_size = len(final_df_test.index)
-
-    print("----------------------------------------------------------")
+    print('\n-----------------------------')
     print("Validation split is now set at", p_val_size)
-    print("----------------------------------------------------------")
+    print('-----------------------------')
 
     # use of the whole data set for training
     x_dataset_train = final_df_train.iloc[:,1:]
@@ -169,10 +217,6 @@ def main():
 
     x_data_test = np.array(x_data_test)
 
-    print("End of loading data..")
-
-    print("Train set size (after balancing) : ", final_df_train_size)
-    print("Test set size (after balancing) : ", final_df_test_size)
 
     #######################
     # 2. Getting model
@@ -184,44 +228,27 @@ def main():
         os.makedirs(model_backup_folder)
 
     # add of callback models
-    filepath = os.path.join(cfg.backup_model_folder, p_output, p_output + "-{accuracy:02f}-{val_accuracy:02f}__{epoch:02d}.hdf5")
-    checkpoint = ModelCheckpoint(filepath, monitor='val_accuracy', verbose=1, save_best_only=True, mode='max')
+    filepath = os.path.join(cfg.backup_model_folder, p_output, p_output + "-_{epoch:03d}.h5")
+    checkpoint = ModelCheckpoint(filepath, monitor='val_accuracy', verbose=0, mode='max')
     callbacks_list = [checkpoint]
 
     
     # check if backup already exists
-    weights_filepath = None
     backups = sorted(os.listdir(model_backup_folder))
 
     if len(backups) > 0:
+        last_backup_file = backups[-1]
+        model = load_model(last_backup_file)
 
-        # retrieve last backup epoch of model 
-        last_model_backup = None
-        max_last_epoch = 0
-
-        for backup in backups:
-
-            last_epoch = int(backup.split('__')[1].replace('.h5', ''))
-
-            if last_epoch > max_last_epoch and last_epoch < p_epochs:
-                max_last_epoch = last_epoch
-                last_model_backup = backup
-
-        if last_model_backup is None:
-            print("Epochs asked is already computer. Noee")
-            sys.exit(1)
-
-        initial_epoch = max_last_epoch
-        print("-------------------------------------------------")
-        print("Previous backup model found",  last_model_backup, "with already", initial_epoch, " epoch(s) done...")
-        print("Resuming from epoch", str(initial_epoch + 1))
-        print("-------------------------------------------------")
-
-        # load weights
-        weights_filepath = os.path.join(model_backup_folder, last_model_backup)
-
-    print(n_chanels)
-    model = models.get_model(n_chanels, input_shape, p_tl, weights_filepath)
+        # get initial epoch
+        initial_epoch = int(last_backup_file.split('_')[-1].replace('.h5', ''))
+        print('-----------------------------')  
+        print('-- Restore model from backup...')
+        print('-- Restart training @epoch:', initial_epoch)
+        print('-----------------------------')
+    else:
+        model = models.get_model(n_chanels, input_shape, p_tl)
+        
     model.summary()
 
     # prepare train and validation dataset
@@ -231,7 +258,9 @@ def main():
     y_val = to_categorical(y_val)
     y_test = to_categorical(y_dataset_test)
 
-    print("Fitting model with custom class_weight", class_weight)
+    print('-----------------------------')
+    print("-- Fitting model with custom class_weight", class_weight)
+    print('-----------------------------')
     model.fit(X_train, y_train, 
         validation_data=(X_val, y_val), 
         initial_epoch=initial_epoch, 
@@ -247,7 +276,7 @@ def main():
     if not os.path.exists(cfg.output_models):
         os.makedirs(cfg.output_models)
 
-    # save the model into HDF5 file
+    # save the model into H5 file
     model_output_path = os.path.join(cfg.output_models, p_output + '.h5')
     model.save(model_output_path)
 
@@ -255,9 +284,6 @@ def main():
     y_train_prediction = model.predict(X_train)
     y_val_prediction = model.predict(X_val)
     y_test_prediction = model.predict(x_dataset_test)
-
-    # y_train_prediction = [1 if x > 0.5 else 0 for x in y_train_prediction]
-    # y_val_prediction = [1 if x > 0.5 else 0 for x in y_val_prediction]
 
     y_train_prediction = np.argmax(y_train_prediction, axis=1)
     y_val_prediction = np.argmax(y_val_prediction, axis=1)
