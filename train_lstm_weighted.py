@@ -1,5 +1,5 @@
 # main imports
-import argparse
+import argparse, sys
 import numpy as np
 import pandas as pd
 import os
@@ -14,6 +14,8 @@ from ipfml import utils
 from keras.layers import Dense, Dropout, LSTM, Embedding, GRU, BatchNormalization, ConvLSTM2D, Conv3D, Flatten
 from keras.preprocessing.sequence import pad_sequences
 from keras.models import Sequential
+from keras.models import load_model
+from keras.callbacks import ModelCheckpoint
 from sklearn.metrics import roc_auc_score, accuracy_score
 import tensorflow as tf
 from keras import backend as K
@@ -22,6 +24,30 @@ from sklearn.model_selection import train_test_split
 from joblib import dump
 
 import custom_config as cfg
+
+# global variables
+n_counter = 0
+total_samples = 0
+
+def write_progress(progress):
+    '''
+    Display progress information as progress bar
+    '''
+    barWidth = 180
+
+    output_str = "["
+    pos = barWidth * progress
+    for i in range(barWidth):
+        if i < pos:
+           output_str = output_str + "="
+        elif i == pos:
+           output_str = output_str + ">"
+        else:
+            output_str = output_str + " "
+
+    output_str = output_str + "] " + str(int(progress * 100.0)) + " %\r"
+    print(output_str)
+    sys.stdout.write("\033[F")
 
 
 def build_input(df, seq_norm):
@@ -35,6 +61,8 @@ def build_input(df, seq_norm):
         {np.ndarray} -- input LSTM data as numpy array
     """
 
+    global n_counter
+    global total_samples
     arr = []
 
     # for each input line
@@ -57,6 +85,10 @@ def build_input(df, seq_norm):
             seq_arr.append(np.array(seq_elems))
             
         arr.append(seq_arr)
+
+        # update progress
+        n_counter += 1
+        write_progress(n_counter / float(total_samples))
 
     arr = np.array(arr)
     print(arr.shape)
@@ -129,15 +161,15 @@ def create_model(_input_shape):
     model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
-    print ('Compiling...')
-    # model.compile(loss='binary_crossentropy',
-    #               optimizer='rmsprop',
-    #               metrics=['accuracy'])
+    print ('-- Compiling...')
 
     return model
 
 
 def main():
+
+    # get this variable as global
+    global total_samples
 
     parser = argparse.ArgumentParser(description="Read and compute training of LSTM model")
 
@@ -157,8 +189,13 @@ def main():
     p_batch_size   = args.batch_size
     p_seq_norm     = bool(args.seq_norm)
 
+    print('-----------------------------')
+    print("----- Preparing data... -----")
     dataset_train = pd.read_csv(p_train, header=None, sep=';')
     dataset_test = pd.read_csv(p_test, header=None, sep=';')
+
+    print("-- Train set size : ", len(dataset_train))
+    print("-- Test set size : ", len(dataset_test))
 
     # getting weighted class over the whole dataset
     noisy_df_train = dataset_train[dataset_train.iloc[:, 0] == 1]
@@ -176,9 +213,12 @@ def main():
 
     total_samples = noisy_samples + not_noisy_samples
 
-    print('noisy', noisy_samples)
-    print('not_noisy', not_noisy_samples)
-    print('total', total_samples)
+    print('-----------------------------')
+    print('---- Dataset information ----')
+    print('-- noisy:', noisy_samples)
+    print('-- not_noisy:', not_noisy_samples)
+    print('-- total:', total_samples)
+    print('-----------------------------')
 
     class_weight = {
         0: noisy_samples / float(total_samples),
@@ -188,6 +228,9 @@ def main():
     # shuffle data
     final_df_train = sklearn.utils.shuffle(dataset_train)
     final_df_test = sklearn.utils.shuffle(dataset_test)
+
+    print('---- Loading dataset.... ----')
+    print('-----------------------------\n')
 
     # split dataset into X_train, y_train, X_test, y_test
     X_train_all = final_df_train.loc[:, 1:].apply(lambda x: x.astype(str).str.split('::'))
@@ -199,14 +242,45 @@ def main():
     y_test = final_df_test.loc[:, 0].astype('int')
 
     input_shape = (X_train_all.shape[1], X_train_all.shape[2], X_train_all.shape[3], X_train_all.shape[4])
-    print('Training data input shape', input_shape)
-    model = create_model(input_shape)
+    
+    
+    print('\n-----------------------------')
+    print('-- Training data input shape', input_shape)
+    print('-----------------------------')
+
+    # create backup folder for current model
+    model_backup_folder = os.path.join(cfg.backup_model_folder, p_output)
+    if not os.path.exists(model_backup_folder):
+        os.makedirs(model_backup_folder)
+
+    # add of callback models
+    filepath = os.path.join(cfg.backup_model_folder, p_output, p_output + "-_{epoch:03d}.h5")
+    checkpoint = ModelCheckpoint(filepath, monitor='val_accuracy', verbose=0, mode='max')
+    callbacks_list = [checkpoint]
+
+    
+    # check if backup already exists
+    backups = sorted(os.listdir(model_backup_folder))
+
+    if len(backups) > 0:
+        last_backup_file = backups[-1]
+        model = load_model(last_backup_file)
+
+        # get initial epoch
+        initial_epoch = int(last_backup_file.split('_')[-1].replace('.h5', ''))
+        print('-----------------------------')  
+        print('-- Restore model from backup...')
+        print('-- Restart training @epoch:', initial_epoch)
+        print('-----------------------------')
+    else:
+        model = create_model(input_shape)
     model.summary()
 
     # prepare train and validation dataset
     X_train, X_val, y_train, y_val = train_test_split(X_train_all, y_train_all, test_size=0.3, shuffle=False)
 
-    print("Fitting model with custom class_weight", class_weight)
+    print("-- Fitting model with custom class_weight", class_weight)
+    print('-----------------------------')
     history = model.fit(X_train, y_train, batch_size=p_batch_size, epochs=p_epochs, validation_data=(X_val, y_val), verbose=1, shuffle=True, class_weight=class_weight)
 
     # list all data in history
