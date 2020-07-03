@@ -154,9 +154,11 @@ def create_model(_input_shape):
     model.add(Dropout(0.5))
 
     model.add(Flatten())
-    model.add(Dense(512, activation='sigmoid'))
+    model.add(Dense(512, activation='relu'))
+    model.add(BatchNormalization())
     model.add(Dropout(0.5))
-    model.add(Dense(128, activation='sigmoid'))
+    model.add(Dense(128, activation='relu'))
+    model.add(BatchNormalization())
     model.add(Dropout(0.5))
     model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
