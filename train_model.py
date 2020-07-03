@@ -281,6 +281,7 @@ def main():
     model_output_path = os.path.join(cfg.output_models, p_output + '.h5')
     model.save(model_output_path)
 
+    print('Input prediction shape', X_train.shape)
     # Get results obtained from model
     y_train_prediction = model.predict(list(X_train))
     y_val_prediction = model.predict(list(X_val))
