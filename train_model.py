@@ -270,7 +270,7 @@ def main():
         callbacks=callbacks_list, 
         class_weight=class_weight)
 
-    score = model.evaluate(X_val, y_val, batch_size=p_batch_size)
+    score = model.evaluate(X_val, y_val_cat, batch_size=p_batch_size)
 
     print("Accuracy score on val dataset ", score)
 
