@@ -297,7 +297,7 @@ def main():
 
     roc_train_score = roc_auc_score(y_train, y_train_prediction)
     roc_val_score = roc_auc_score(y_val, y_val_prediction)
-    roc_test_score = roc_auc_score(y_dataset_test, y_val_prediction)
+    roc_test_score = roc_auc_score(y_dataset_test, y_test_prediction)
 
     # save model performance
     if not os.path.exists(cfg.output_results_folder):
