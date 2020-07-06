@@ -195,8 +195,8 @@ def generate_data(transformation, _dataset_path, _output, _human_thresholds, _re
                         filename_parts = filename.split('_')
 
                         # get samples : `00XXX`
-                        n_samples = filename_parts[2]
-                        del filename_parts[2]
+                        n_samples = filename_parts[-1]
+                        del filename_parts[-1]
 
                         # `p3d_XXXXXX`
                         output_reconstructed = '_'.join(filename_parts)
