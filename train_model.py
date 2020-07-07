@@ -56,7 +56,7 @@ def main():
     parser.add_argument('--tl', type=int, help='use or not of transfer learning (`VGG network`)', default=0, choices=[0, 1])
     parser.add_argument('--batch_size', type=int, help='batch size used as model input', default=64)
     parser.add_argument('--epochs', type=int, help='number of epochs used for training model', default=30)
-    parser.add_argument('--chanels', type=int, help="given number of ordered chanels for each input images (example: '1,3,3')", required=True)
+    parser.add_argument('--chanels', type=str, help="given number of ordered chanels for each input images (example: '1,3,3')", required=True)
     parser.add_argument('--size', type=str, help="Size of input images", default="100, 100")
     parser.add_argument('--val_size', type=float, help='percent of validation data during training process', default=0.3)
 
