@@ -85,7 +85,7 @@ def build_input(df, seq_norm, p_chanels):
                 else:
                     img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
                 
-                seq_elems.append(np.array(img) / 255.)
+                seq_elems.append(np.array(img, 'float32') / 255.)
 
             #seq_arr.append(np.array(seq_elems).flatten())
             seq_arr.append(np.array(seq_elems))
