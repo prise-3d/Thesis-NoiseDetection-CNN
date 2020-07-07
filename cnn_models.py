@@ -36,35 +36,37 @@ def generate_model_2D(_input_shape):
 
     model.add(Flatten())
 
-    model.add(Dense(140))
-    model.add(Activation('relu'))
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
-
-    # model.add(Dense(120))
-    # model.add(Activation('sigmoid'))
-    # model.add(BatchNormalization())
-    # model.add(Dropout(0.5))
-
-    model.add(Dense(80))
     model.add(Activation('relu'))
+
+    model.add(Dense(256, 
+        kernel_regularizer=regularizers.l1_l2(l1=1e-5, l2=1e-4),
+        bias_regularizer=regularizers.l2(1e-4),
+        activity_regularizer=regularizers.l2(1e-5)))
+
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
-
-    model.add(Dense(40))
     model.add(Activation('relu'))
+
+    model.add(Dense(64, 
+        kernel_regularizer=regularizers.l1_l2(l1=1e-5, l2=1e-4),
+        bias_regularizer=regularizers.l2(1e-4),
+        activity_regularizer=regularizers.l2(1e-5)))
+
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
-
-    model.add(Dense(20))
     model.add(Activation('relu'))
-    model.add(BatchNormalization())
-    model.add(Dropout(0.5))
+
+    model.add(Dense(20, 
+        kernel_regularizer=regularizers.l1_l2(l1=1e-5, l2=1e-4),
+        bias_regularizer=regularizers.l2(1e-4),
+        activity_regularizer=regularizers.l2(1e-5)))
 
     model.add(Dense(2))
     model.add(Activation('softmax'))
 
-    model.compile(loss='categorical_crossentropy',
+    model.compile(loss='binary_crossentropy',
                   optimizer='adam',
                   #metrics=['accuracy', metrics.auc])
                   metrics=['accuracy'])
