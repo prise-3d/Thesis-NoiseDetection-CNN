@@ -349,11 +349,11 @@ def main():
     model_history = os.path.join(cfg.output_results_folder, p_output + '.png')
     plt.savefig(model_history)
 
-    # save model using joblib
+    # save model using keras API
     if not os.path.exists(cfg.output_models):
         os.makedirs(cfg.output_models)
 
-    dump(model, os.path.join(cfg.output_models, p_output + '.joblib'))
+    model.save(os.path.join(cfg.output_models, p_output + '.h5'))
 
     # save model results
     if not os.path.exists(cfg.output_results_folder):
