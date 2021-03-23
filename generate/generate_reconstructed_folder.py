@@ -13,20 +13,21 @@ import numpy as np
 # images processing imports
 from PIL import Image
 from ipfml.processing.segmentation import divide_in_blocks
+from transformations import Transformation
 
 # modules imports
 sys.path.insert(0, '') # trick to enable import of main folder module
 
-import custom_config as cfg
-from modules.utils.data import get_scene_image_quality
-from modules.classes.Transformation import Transformation
+import config as cfg
+zones = np.arange(16)
 
-# getting configuration information
-zone_folder             = cfg.zone_folder
+def get_scene_image_quality(img_path):
 
-# define all scenes values
-zones                   = cfg.zones_indices
-features_choices        = cfg.features_choices_labels
+    # if path getting last element (image name) and extract quality
+    img_postfix = img_path.split('/')[-1].split(cfg.scene_image_quality_separator)[-1]
+    img_quality = img_postfix.replace(cfg.scene_image_extension, '')
+
+    return int(img_quality)
 
 '''
 Display progress information as progress bar
@@ -259,8 +260,8 @@ def main():
 
     for id, feature in enumerate(p_features):
 
-        if feature not in features_choices or feature == 'static':
-            raise ValueError("Unknown feature {0}, please select a correct feature (`static` excluded) : {1}".format(feature, features_choices))
+        if feature not in cfg.features_choices_labels or feature == 'static':
+            raise ValueError("Unknown feature {0}, please select a correct feature (`static` excluded) : {1}".format(feature, cfg.features_choices_labels))
         
         transformations.append(Transformation(feature, p_params[id], p_size))
 

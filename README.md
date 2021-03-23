@@ -102,34 +102,6 @@ All scripts named **prediction/predict_seuil_expe\*.py** are used to simulate mo
 
 Once you have simulation done. Checkout your **threshold_map/%MODEL_NAME%/simulation\_curves\_zones\_\*/** folder and use it with help of **display_simulation_curves.py** script.
 
-
-## Use with Calculco (OAR service)
-
-The `oar.example.sh` is an example of script to run in OAR platform.
-
-```
-oarsub -S oar.sh
-```
-
-Check your JOB_ID
-```
-oarstat
-```
-
-**Note:** Not forget to create symbolic link where it's necessary to logs results
-
-```
-ln -s /where/to/store/you/data data
-ln -s /where/to/store/you/results/ results
-ln -s /where/to/store/you/models_info models_info
-ln -s /where/to/store/you/saved_models saved_models
-```
-
-or simply use this script:
-```
-bash generate_symlinks.sh /where/to/store/you
-```
-
 ## License
 
 [MIT](https://github.com/prise-3d/Thesis-NoiseDetection-CNN/blob/master/LICENSE)

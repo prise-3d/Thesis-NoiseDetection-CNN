@@ -18,26 +18,8 @@ from ipfml.processing.segmentation import divide_in_blocks
 # modules imports
 sys.path.insert(0, '') # trick to enable import of main folder module
 
-import custom_config  as cfg
-from modules.utils import data as dt
-from modules.classes.Transformation import Transformation
-
-# getting configuration information
-zone_folder             = cfg.zone_folder
-learned_folder          = cfg.learned_zones_folder
-min_max_filename        = cfg.min_max_filename_extension
-
-# define all scenes values
-scenes_list             = cfg.scenes_names
-scenes_indices          = cfg.scenes_indices
-dataset_path            = cfg.dataset_path
-zones                   = cfg.zones_indices
-seuil_expe_filename     = cfg.seuil_expe_filename
-
-features_choices        = cfg.features_choices_labels
-output_data_folder      = cfg.output_datasets
-
-generic_output_file_svd = '_random.csv'
+import config  as cfg
+from transformations import Transformation
 
 def generate_data_model(_filename, _transformations, _dataset_folder, _selected_zones, _sequence):
 
