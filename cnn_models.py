@@ -2,11 +2,12 @@
 import sys
 
 # model imports
-from keras.preprocessing.image import ImageDataGenerator
+# from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential, Model
 from keras.layers import Conv2D, MaxPooling2D, AveragePooling2D, Conv3D, MaxPooling3D, AveragePooling3D
 from keras.layers import Activation, Dropout, Flatten, Dense, BatchNormalization
-from keras.applications.vgg19 import VGG19
+from tensorflow.keras import regularizers
+# from keras.applications.vgg19 import VGG19
 from keras import backend as K
 import tensorflow as tf
 
@@ -35,35 +36,37 @@ def generate_model_2D(_input_shape):
 
     model.add(Flatten())
 
-    model.add(Dense(140))
-    model.add(Activation('relu'))
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
-
-    # model.add(Dense(120))
-    # model.add(Activation('sigmoid'))
-    # model.add(BatchNormalization())
-    # model.add(Dropout(0.5))
-
-    model.add(Dense(80))
     model.add(Activation('relu'))
+
+    model.add(Dense(256, 
+        kernel_regularizer=regularizers.l1_l2(l1=1e-5, l2=1e-4),
+        bias_regularizer=regularizers.l2(1e-4),
+        activity_regularizer=regularizers.l2(1e-5)))
+
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
-
-    model.add(Dense(40))
     model.add(Activation('relu'))
+
+    model.add(Dense(64, 
+        kernel_regularizer=regularizers.l1_l2(l1=1e-5, l2=1e-4),
+        bias_regularizer=regularizers.l2(1e-4),
+        activity_regularizer=regularizers.l2(1e-5)))
+
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
-
-    model.add(Dense(20))
     model.add(Activation('relu'))
-    model.add(BatchNormalization())
-    model.add(Dropout(0.5))
+
+    model.add(Dense(20, 
+        kernel_regularizer=regularizers.l1_l2(l1=1e-5, l2=1e-4),
+        bias_regularizer=regularizers.l2(1e-4),
+        activity_regularizer=regularizers.l2(1e-5)))
 
     model.add(Dense(2))
     model.add(Activation('softmax'))
 
-    model.compile(loss='categorical_crossentropy',
+    model.compile(loss='binary_crossentropy',
                   optimizer='adam',
                   #metrics=['accuracy', metrics.auc])
                   metrics=['accuracy'])
@@ -77,11 +80,7 @@ def generate_model_3D(_input_shape):
 
     print(_input_shape)
 
-    model.add(Conv3D(200, (1, 3, 3), input_shape=_input_shape))
-    model.add(Activation('relu'))
-    model.add(MaxPooling3D(pool_size=(1, 2, 2)))
-
-    model.add(Conv3D(100, (1, 3, 3)))
+    model.add(Conv3D(60, (1, 3, 3), input_shape=_input_shape))
     model.add(Activation('relu'))
     model.add(MaxPooling3D(pool_size=(1, 2, 2)))
 
@@ -89,33 +88,39 @@ def generate_model_3D(_input_shape):
     model.add(Activation('relu'))
     model.add(MaxPooling3D(pool_size=(1, 2, 2)))
 
+    model.add(Conv3D(20, (1, 3, 3)))
+    model.add(Activation('relu'))
+    model.add(MaxPooling3D(pool_size=(1, 2, 2)))
+
     model.add(Flatten())
 
-    model.add(Dense(256))
-    model.add(Activation('relu'))
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
+    model.add(Activation('relu'))
 
-    model.add(Dense(128))
-    model.add(Activation('relu'))
+    model.add(Dense(64, 
+        kernel_regularizer=regularizers.l1_l2(l1=1e-5, l2=1e-4),
+        bias_regularizer=regularizers.l2(1e-4),
+        activity_regularizer=regularizers.l2(1e-5)))
+        
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
+    model.add(Activation('relu'))
 
-    model.add(Dense(64))
-    model.add(Activation('relu'))
+    model.add(Dense(20, 
+        kernel_regularizer=regularizers.l1_l2(l1=1e-5, l2=1e-4),
+        bias_regularizer=regularizers.l2(1e-4),
+        activity_regularizer=regularizers.l2(1e-5)))
+        
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
-
-    model.add(Dense(20))
     model.add(Activation('relu'))
-    model.add(BatchNormalization())
-    model.add(Dropout(0.5))
 
     model.add(Dense(2))
     model.add(Activation('sigmoid'))
 
-    model.compile(loss='categorical_crossentropy',
-                  optimizer='rmsprop',
+    model.compile(loss='binary_crossentropy',
+                  optimizer='adam',
                   #metrics=['accuracy', metrics.auc])
                   metrics=['accuracy'])
 
@@ -123,7 +128,7 @@ def generate_model_3D(_input_shape):
 
 
 # using transfer learning (VGG19)
-def generate_model_3D_TL(_input_shape):
+'''def generate_model_3D_TL(_input_shape):
 
     # load pre-trained model
     model = VGG19(weights='imagenet', include_top=False, input_shape=_input_shape)
@@ -134,7 +139,7 @@ def generate_model_3D_TL(_input_shape):
     for layer in model.layers[:5]:
         layer.trainable = False
 
-    '''predictions_model = Sequential(model)
+    predictions_model = Sequential(model)
 
     predictions_model.add(Flatten(model.output))
 
@@ -164,7 +169,7 @@ def generate_model_3D_TL(_input_shape):
     predictions_model.add(Dropout(0.5))
 
     predictions_model.add(Dense(1))
-    predictions_model.add(Activation('sigmoid'))'''
+    predictions_model.add(Activation('sigmoid'))
 
     # adding custom Layers 
     x = model.output
@@ -191,16 +196,16 @@ def generate_model_3D_TL(_input_shape):
                 #   metrics=['accuracy', metrics.auc])
                   metrics=['accuracy'])
 
-    return model_final
+    return model_final'''
 
 
 def get_model(n_channels, _input_shape, _tl=False):
     
-    if _tl:
-        if n_channels == 3:
-            return generate_model_3D_TL(_input_shape)
-        else:
-            print("Can't use transfer learning with only 1 channel")
+    # if _tl:
+    #     if n_channels == 3:
+    #         return generate_model_3D_TL(_input_shape)
+    #     else:
+    #         print("Can't use transfer learning with only 1 channel")
 
     if n_channels == 1:
         return generate_model_2D(_input_shape)

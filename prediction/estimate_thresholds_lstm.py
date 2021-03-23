@@ -91,11 +91,7 @@ def main():
     # 2. load model and compile it
 
     # TODO : check kind of model
-    model = joblib.load(p_model)
-    model.compile(loss='binary_crossentropy',
-                  optimizer='rmsprop',
-                  metrics=['accuracy'])
-    # model = load_model(p_model)
+    model = load_model(p_model)
     # model.compile(loss='binary_crossentropy',
     #               optimizer='rmsprop',
     #               metrics=['accuracy'])

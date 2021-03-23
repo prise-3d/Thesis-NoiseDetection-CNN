@@ -5,6 +5,7 @@ import pandas as pd
 import os
 import ctypes
 from PIL import Image
+import cv2
 
 from keras import backend as K
 import matplotlib.pyplot as plt
@@ -50,7 +51,7 @@ def write_progress(progress):
     sys.stdout.write("\033[F")
 
 
-def build_input(df, seq_norm):
+def build_input(df, seq_norm, p_chanels):
     """Convert dataframe to numpy array input with timesteps as float array
     
     Arguments:
@@ -76,10 +77,15 @@ def build_input(df, seq_norm):
             seq_elems = []
 
             # for each element in sequence data
-            for img_path in column:
-                img = Image.open(img_path)
+            for i, img_path in enumerate(column):
+
                 # seq_elems.append(np.array(img).flatten())
-                seq_elems.append(np.array(img) / 255.)
+                if p_chanels[i] > 1:
+                    img = cv2.imread(img_path)
+                else:
+                    img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+                
+                seq_elems.append(np.array(img, 'float32') / 255.)
 
             #seq_arr.append(np.array(seq_elems).flatten())
             seq_arr.append(np.array(seq_elems))
@@ -154,9 +160,11 @@ def create_model(_input_shape):
     model.add(Dropout(0.5))
 
     model.add(Flatten())
-    model.add(Dense(512, activation='sigmoid'))
+    model.add(Dense(512, activation='relu'))
+    model.add(BatchNormalization())
     model.add(Dropout(0.5))
-    model.add(Dense(128, activation='sigmoid'))
+    model.add(Dense(128, activation='relu'))
+    model.add(BatchNormalization())
     model.add(Dropout(0.5))
     model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
@@ -176,6 +184,7 @@ def main():
     parser.add_argument('--train', type=str, help='input train dataset', required=True)
     parser.add_argument('--test', type=str, help='input test dataset', required=True)
     parser.add_argument('--output', type=str, help='output model name', required=True)
+    parser.add_argument('--chanels', type=str, help="given number of ordered chanels (example: '1,3,3') for each element of window", required=True)
     parser.add_argument('--epochs', type=int, help='number of expected epochs', default=30)
     parser.add_argument('--batch_size', type=int, help='expected batch size for training model', default=64)
     parser.add_argument('--seq_norm', type=int, help='normalization sequence by features', choices=[0, 1], default=0)
@@ -185,6 +194,7 @@ def main():
     p_train        = args.train
     p_test         = args.test
     p_output       = args.output
+    p_chanels     = list(map(int, args.chanels.split(',')))
     p_epochs       = args.epochs
     p_batch_size   = args.batch_size
     p_seq_norm     = bool(args.seq_norm)
@@ -234,11 +244,11 @@ def main():
 
     # split dataset into X_train, y_train, X_test, y_test
     X_train_all = final_df_train.loc[:, 1:].apply(lambda x: x.astype(str).str.split('::'))
-    X_train_all = build_input(X_train_all, p_seq_norm)
+    X_train_all = build_input(X_train_all, p_seq_norm, p_chanels)
     y_train_all = final_df_train.loc[:, 0].astype('int')
 
     X_test = final_df_test.loc[:, 1:].apply(lambda x: x.astype(str).str.split('::'))
-    X_test = build_input(X_test, p_seq_norm)
+    X_test = build_input(X_test, p_seq_norm, p_chanels)
     y_test = final_df_test.loc[:, 0].astype('int')
 
     input_shape = (X_train_all.shape[1], X_train_all.shape[2], X_train_all.shape[3], X_train_all.shape[4])
@@ -305,12 +315,13 @@ def main():
     # train_score, train_acc = model.evaluate(X_train, y_train, batch_size=1)
 
     # print(train_acc)
-    y_train_predict = model.predict_classes(X_train)
-    y_val_predict = model.predict_classes(X_val)
-    y_test_predict = model.predict_classes(X_test)
+    y_train_predict = model.predict(X_train, batch_size=1, verbose=1)
+    y_val_predict = model.predict(X_val, batch_size=1, verbose=1)
+    y_test_predict = model.predict(X_test, batch_size=1, verbose=1)
 
-    print(y_train_predict)
-    print(y_test_predict)
+    y_train_predict = [ 1 if l > 0.5 else 0 for l in y_train_predict ]
+    y_val_predict = [ 1 if l > 0.5 else 0 for l in y_val_predict ]
+    y_test_predict = [ 1 if l > 0.5 else 0 for l in y_test_predict ]
 
     auc_train = roc_auc_score(y_train, y_train_predict)
     auc_val = roc_auc_score(y_val, y_val_predict)
@@ -338,11 +349,11 @@ def main():
     model_history = os.path.join(cfg.output_results_folder, p_output + '.png')
     plt.savefig(model_history)
 
-    # save model using joblib
+    # save model using keras API
     if not os.path.exists(cfg.output_models):
         os.makedirs(cfg.output_models)
 
-    dump(model, os.path.join(cfg.output_models, p_output + '.joblib'))
+    model.save(os.path.join(cfg.output_models, p_output + '.h5'))
 
     # save model results
     if not os.path.exists(cfg.output_results_folder):

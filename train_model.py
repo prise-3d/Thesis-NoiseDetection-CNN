@@ -56,7 +56,7 @@ def main():
     parser.add_argument('--tl', type=int, help='use or not of transfer learning (`VGG network`)', default=0, choices=[0, 1])
     parser.add_argument('--batch_size', type=int, help='batch size used as model input', default=64)
     parser.add_argument('--epochs', type=int, help='number of epochs used for training model', default=30)
-    parser.add_argument('--chanels', type=int, help="given number of chanels if necessary", default=0)
+    parser.add_argument('--chanels', type=str, help="given number of ordered chanels for each input images (example: '1,3,3')", required=True)
     parser.add_argument('--size', type=str, help="Size of input images", default="100, 100")
     parser.add_argument('--val_size', type=float, help='percent of validation data during training process', default=0.3)
 
@@ -68,7 +68,7 @@ def main():
     p_tl          = args.tl
     p_batch_size  = args.batch_size
     p_epochs      = args.epochs
-    p_chanels     = args.chanels
+    p_chanels     = list(map(int, args.chanels.split(',')))
     p_size        = args.size.split(',')
     p_val_size    = args.val_size
 
@@ -94,10 +94,7 @@ def main():
     print("--Reading all images data...")
 
     # getting number of chanel
-    if p_chanels == 0:
-        n_chanels = len(dataset_train[1][1].split('::'))
-    else:
-        n_chanels = p_chanels
+    n_chanels = sum(p_chanels)
 
     print("-- Number of chanels : ", n_chanels)
     img_width, img_height = [ int(s) for s in p_size ]
@@ -145,44 +142,30 @@ def main():
 
     final_df_train = dataset_train
     final_df_test = dataset_test
-    
-    def load_multiple_greyscale(x):
-        # update progress
-        global n_counter
-        n_counter += 1
-        write_progress(n_counter / float(total_samples))
-        return [cv2.imread(path, cv2.IMREAD_GRAYSCALE) for path in x.split('::')]
 
-    def load_greyscale(x):
+    def load_images(x):
         # update progress
         global n_counter
         n_counter += 1
         write_progress(n_counter / float(total_samples))
-        return cv2.imread(x, cv2.IMREAD_GRAYSCALE)
 
-    def load_rgb(x):
-        # update progress
-        global n_counter
-        n_counter += 1
-        write_progress(n_counter / float(total_samples))
-        return cv2.imread(x)
+        images = []
+        for i, path in enumerate(x.split('::')):
+            if p_chanels[i] > 1:
+                img = cv2.imread(path)
+            else:
+                img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+            images.append(img)
+
+        return images
 
 
     print('---- Loading dataset.... ----')
     print('-----------------------------\n')
 
     # check if specific number of chanels is used
-    if p_chanels == 0:
-        # `::` is the separator used for getting each img path
-        if n_chanels > 1:
-            final_df_train[1] = final_df_train[1].apply(lambda x: load_multiple_greyscale(x))
-            final_df_test[1] = final_df_test[1].apply(lambda x: load_multiple_greyscale(x))
-        else:
-            final_df_train[1] = final_df_train[1].apply(lambda x: load_greyscale(x))
-            final_df_test[1] = final_df_test[1].apply(lambda x: load_greyscale(x))
-    else:
-        final_df_train[1] = final_df_train[1].apply(lambda x: load_rgb(x))
-        final_df_test[1] = final_df_test[1].apply(lambda x: load_rgb(x))
+    final_df_train[1] = final_df_train[1].apply(lambda x: load_images(x))
+    final_df_test[1] = final_df_test[1].apply(lambda x: load_images(x))
 
     # reshape array data
     final_df_train[1] = final_df_train[1].apply(lambda x: np.array(x).reshape(input_shape))
@@ -238,7 +221,8 @@ def main():
 
     if len(backups) > 0:
         last_backup_file = backups[-1]
-        model = load_model(last_backup_file)
+        last_backup_file_path = os.path.join(model_backup_folder, last_backup_file)
+        model = load_model(last_backup_file_path)
 
         # get initial epoch
         initial_epoch = int(last_backup_file.split('_')[-1].replace('.h5', ''))
@@ -254,22 +238,22 @@ def main():
     # prepare train and validation dataset
     X_train, X_val, y_train, y_val = train_test_split(x_data_train, y_dataset_train, test_size=p_val_size, shuffle=False)
 
-    y_train = to_categorical(y_train)
-    y_val = to_categorical(y_val)
-    y_test = to_categorical(y_dataset_test)
+    y_train_cat = to_categorical(y_train)
+    y_val_cat = to_categorical(y_val)
+    y_test_cat = to_categorical(y_dataset_test)
 
     print('-----------------------------')
     print("-- Fitting model with custom class_weight", class_weight)
     print('-----------------------------')
-    model.fit(X_train, y_train, 
-        validation_data=(X_val, y_val), 
+    model.fit(X_train, y_train_cat, 
+        validation_data=(X_val, y_val_cat), 
         initial_epoch=initial_epoch, 
         epochs=p_epochs, 
         batch_size=p_batch_size, 
         callbacks=callbacks_list, 
         class_weight=class_weight)
 
-    score = model.evaluate(X_val, y_val, batch_size=p_batch_size)
+    score = model.evaluate(X_val, y_val_cat, batch_size=p_batch_size)
 
     print("Accuracy score on val dataset ", score)
 
@@ -280,21 +264,23 @@ def main():
     model_output_path = os.path.join(cfg.output_models, p_output + '.h5')
     model.save(model_output_path)
 
+    print('Begin of prediction score on the whole dataset:')
     # Get results obtained from model
-    y_train_prediction = model.predict(X_train)
-    y_val_prediction = model.predict(X_val)
-    y_test_prediction = model.predict(x_dataset_test)
+    y_train_prediction = model.predict(X_train, verbose=1)
+    y_val_prediction = model.predict(X_val, verbose=1)
+    y_test_prediction = model.predict(x_data_test, verbose=1)
 
     y_train_prediction = np.argmax(y_train_prediction, axis=1)
     y_val_prediction = np.argmax(y_val_prediction, axis=1)
+    y_test_prediction = np.argmax(y_test_prediction, axis=1)
 
     acc_train_score = accuracy_score(y_train, y_train_prediction)
     acc_val_score = accuracy_score(y_val, y_val_prediction)
-    acc_test_score = accuracy_score(y_test, y_test_prediction)
+    acc_test_score = accuracy_score(y_dataset_test, y_test_prediction)
 
     roc_train_score = roc_auc_score(y_train, y_train_prediction)
     roc_val_score = roc_auc_score(y_val, y_val_prediction)
-    roc_test_score = roc_auc_score(y_test, y_val_prediction)
+    roc_test_score = roc_auc_score(y_dataset_test, y_test_prediction)
 
     # save model performance
     if not os.path.exists(cfg.output_results_folder):
