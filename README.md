@@ -73,13 +73,13 @@ List of expected parameter by reconstruction method:
 
 **__Example:__**
 ```bash
-python generate/generate_dataset.py --output data/output_data_filename --features "svd_reconstruction, ipca_reconstruction, fast_ica_reconstruction" --renderer "maxwell" --scenes "A, D, G, H" --params "100, 200 :: 50, 10 :: 50" --nb_zones 10 --random 1
+python generate/generate_dataset_sequence_file.py --output data/output_data_filename --folder <generated_data_folder> --features "svd_reconstruction, ipca_reconstruction, fast_ica_reconstruction" --params "100, 200 :: 50, 10 :: 50" --sequence 5 --size "100, 100" --selected_zones <zones_files.csv>
 ```
 
 
 Then, train model using your custom dataset:
 ```bash
-python train_model.py --data data/custom_dataset --output output_model_name
+python train_lstm_model.py --train data/custom_dataset.train --test data/custom_dataset.test --chanels "1,3,3" --epochs 30 --batch_size 64 --seq_norm 1 --output output_model_name
 ```
 
 ### Predict image using model

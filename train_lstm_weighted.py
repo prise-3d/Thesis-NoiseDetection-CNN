@@ -85,6 +85,7 @@ def build_input(df, seq_norm, p_chanels):
                 else:
                     img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
                 
+                # normalization of images
                 seq_elems.append(np.array(img, 'float32') / 255.)
 
             #seq_arr.append(np.array(seq_elems).flatten())
@@ -160,10 +161,10 @@ def create_model(_input_shape):
     model.add(Dropout(0.5))
 
     model.add(Flatten())
-    model.add(Dense(512, activation='relu'))
+    model.add(Dense(128, activation='relu'))
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
-    model.add(Dense(128, activation='relu'))
+    model.add(Dense(32, activation='relu'))
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
     model.add(Dense(1, activation='sigmoid'))
