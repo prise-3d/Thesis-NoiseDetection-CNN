@@ -12,31 +12,6 @@ pip install -r requirements.txt
 
 ## Project structure
 
-### Link to your dataset
-
-You have to create a symbolic link to your own database which respects this structure:
-
-- dataset/
-  - Scene1/
-    - zone00/
-    - ...
-    - zone15/
-      - seuilExpe (file which contains threshold samples of zone image perceived by human)
-    - Scene1_00050.png
-    - Scene1_00070.png
-    - ...
-    - Scene1_01180.png
-    - Scene1_01200.png
-  - Scene2/
-    - ...
-  - ...
-
-Create your symbolic link:
-
-```
-ln -s /path/to/your/data dataset
-```
-
 ### Code architecture description
 
 - **modules/\***: contains all modules usefull for the whole project (such as configuration variables)
