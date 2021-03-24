@@ -84,7 +84,7 @@ def build_input(df, seq_norm, p_chanels):
                     img = cv2.imread(img_path)
                 else:
                     img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-                    img = cv2.resize(img, (50, 50))
+                img = cv2.resize(img, (50, 50))
                 
                 # normalization of images
                 seq_elems.append(np.array(img, 'float16') / 255.)
@@ -354,6 +354,10 @@ def main():
     plt.legend(['train', 'test'], loc='upper left')
 
     model_history = os.path.join(cfg.output_results_folder, p_output + '.png')
+
+    if not os.path.exists(cfg.output_results_folder):
+        os.makedirs(cfg.output_results_folder)
+        
     plt.savefig(model_history)
 
     # save model using keras API
