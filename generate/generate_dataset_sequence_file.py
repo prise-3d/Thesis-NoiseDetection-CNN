@@ -233,8 +233,8 @@ def main():
 
     for id, feature in enumerate(p_features):
 
-        if feature not in features_choices:
-            raise ValueError("Unknown metric, please select a correct metric : ", features_choices)
+        if feature not in cfg.features_choices_labels:
+            raise ValueError("Unknown metric, please select a correct metric : ", cfg.features_choices_labels)
 
         transformations.append(Transformation(feature, p_params[id], p_size))
 
