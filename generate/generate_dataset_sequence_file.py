@@ -23,12 +23,12 @@ from transformations import Transformation
 
 def generate_data_model(_filename, _transformations, _dataset_folder, _selected_zones, _sequence):
 
-    output_train_filename = os.path.join(output_data_folder, _filename, _filename + ".train")
-    output_test_filename = os.path.join(output_data_folder, _filename, _filename + ".test")
+    output_train_filename = os.path.join(cfg.output_data_folder, _filename, _filename + ".train")
+    output_test_filename = os.path.join(cfg.output_data_folder, _filename, _filename + ".test")
 
     # create path if not exists
-    if not os.path.exists(os.path.join(output_data_folder, _filename)):
-        os.makedirs(os.path.join(output_data_folder, _filename))
+    if not os.path.exists(os.path.join(cfg.output_data_folder, _filename)):
+        os.makedirs(os.path.join(cfg.output_data_folder, _filename))
 
     train_file = open(output_train_filename, 'w')
     test_file = open(output_test_filename, 'w')
@@ -81,12 +81,14 @@ def generate_data_model(_filename, _transformations, _dataset_folder, _selected_
 
                     # get image path to manage
                     # {sceneName}/static/img.png
-                    transform_image_path = os.path.join(scene_path, transformation.getName(), image_name) 
-                    static_transform_image = Image.open(transform_image_path)
+                    
+                    # TODO : check this part
+                    #transform_image_path = os.path.join(scene_path, transformation.getName(), image_name) 
+                    #static_transform_image = Image.open(transform_image_path)
 
-                    static_transform_image_block = divide_in_blocks(static_transform_image, cfg.sub_image_size)[id_zone]
+                    #static_transform_image_block = divide_in_blocks(static_transform_image, cfg.sub_image_size)[id_zone]
 
-                    dt.augmented_data_image(static_transform_image_block, image_folder_path, image_prefix_name)
+                    #transformation.augmented_data_image(static_transform_image_block, image_folder_path, image_prefix_name)
 
                 else:
                     metric_interval_path = os.path.join(zone_path, transformation.getTransformationPath())
