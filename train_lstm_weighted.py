@@ -86,7 +86,7 @@ def build_input(df, seq_norm, p_chanels):
                     img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
                 
                 # normalization of images
-                seq_elems.append(np.array(img, 'float32') / 255.)
+                seq_elems.append(np.array(img, 'float16') / 255.)
 
             #seq_arr.append(np.array(seq_elems).flatten())
             seq_arr.append(np.array(seq_elems))
@@ -110,7 +110,7 @@ def build_input(df, seq_norm, p_chanels):
         
     #     final_arr.append(v_data)
     
-    final_arr = np.array(arr, 'float32')
+    final_arr = np.array(arr, 'float16')
 
     # check if sequence normalization is used
     if seq_norm:
