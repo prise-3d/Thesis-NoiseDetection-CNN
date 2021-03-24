@@ -23,12 +23,12 @@ from transformations import Transformation
 
 def generate_data_model(_filename, _transformations, _dataset_folder, _selected_zones, _sequence):
 
-    output_train_filename = os.path.join(cfg.output_data_folder, _filename, _filename + ".train")
-    output_test_filename = os.path.join(cfg.output_data_folder, _filename, _filename + ".test")
+    output_train_filename = os.path.join(cfg.output_datasets, _filename, _filename + ".train")
+    output_test_filename = os.path.join(cfg.output_datasets, _filename, _filename + ".test")
 
     # create path if not exists
-    if not os.path.exists(os.path.join(cfg.output_data_folder, _filename)):
-        os.makedirs(os.path.join(cfg.output_data_folder, _filename))
+    if not os.path.exists(os.path.join(cfg.output_datasets, _filename)):
+        os.makedirs(os.path.join(cfg.output_datasets, _filename))
 
     train_file = open(output_train_filename, 'w')
     test_file = open(output_test_filename, 'w')

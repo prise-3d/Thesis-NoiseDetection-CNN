@@ -24,7 +24,7 @@ import sklearn
 from sklearn.model_selection import train_test_split
 from joblib import dump
 
-import custom_config as cfg
+import config as cfg
 
 # global variables
 n_counter = 0
