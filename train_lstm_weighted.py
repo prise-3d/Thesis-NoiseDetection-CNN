@@ -125,8 +125,7 @@ def build_input(df, seq_norm, p_chanels):
                     # need to normalize pixel per pixel
                     for x in range(h):
                         for y in range(h):
-                            print(seq[:, i][x][y].shape)
-                            final_arr[index][:, i][x][y] = utils.normalize_arr_with_range(seq[:, i][x][y])
+                            final_arr[index][:, i, x, y] = utils.normalize_arr_with_range(seq[:, i, x, y])
 
             
 
