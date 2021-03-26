@@ -116,7 +116,11 @@ def build_input(df, seq_norm, p_chanels):
     # check if sequence normalization is used
     if seq_norm:
 
+        print('Starting data normalization\n')
         if final_arr.ndim > 2:
+
+            n_counter = 0
+
             n, s, f, h, w = final_arr.shape
             for index, seq in enumerate(final_arr):
                 
@@ -126,6 +130,11 @@ def build_input(df, seq_norm, p_chanels):
                     for x in range(h):
                         for y in range(h):
                             final_arr[index][:, i, x, y] = utils.normalize_arr_with_range(seq[:, i, x, y])
+
+                        
+                # update progress
+                n_counter += 1
+                write_progress(n_counter / float(total_samples))
 
             
 
@@ -248,10 +257,24 @@ def main():
     print('---- Loading dataset.... ----')
     print('-----------------------------\n')
 
+    n_train_samples = len(final_df_train.index)
+    n_test_samples = len(final_df_train.index)
+
+    total_samples = n_train_samples
+    n_counter = 0
+
+    print('Loading train dataset\n')
     # split dataset into X_train, y_train, X_test, y_test
     X_train_all = final_df_train.loc[:, 1:].apply(lambda x: x.astype(str).str.split('::'))
     X_train_all = build_input(X_train_all, p_seq_norm, p_chanels)
     y_train_all = final_df_train.loc[:, 0].astype('int')
+
+    total_samples = n_test_samples
+    n_counter = 0
+
+    X_test = final_df_test.loc[:, 1:].apply(lambda x: x.astype(str).str.split('::'))
+    X_test = build_input(X_test, p_seq_norm, p_chanels)
+    y_test = final_df_test.loc[:, 0].astype('int')
 
     input_shape = (X_train_all.shape[1], X_train_all.shape[2], X_train_all.shape[3], X_train_all.shape[4])
     
@@ -327,14 +350,6 @@ def main():
 
     acc_train = accuracy_score(y_train, y_train_predict)
     acc_val = accuracy_score(y_val, y_val_predict)
-
-    # remove unused variables
-    del X_train
-    del y_train
-    
-    X_test = final_df_test.loc[:, 1:].apply(lambda x: x.astype(str).str.split('::'))
-    X_test = build_input(X_test, p_seq_norm, p_chanels)
-    y_test = final_df_test.loc[:, 0].astype('int')
 
     y_test_predict = model.predict(X_test, batch_size=1, verbose=1)
     y_test_predict = [ 1 if l > 0.5 else 0 for l in y_test_predict ]
