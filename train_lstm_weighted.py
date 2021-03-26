@@ -120,8 +120,13 @@ def build_input(df, seq_norm, p_chanels):
             n, s, f, h, w = final_arr.shape
             for index, seq in enumerate(final_arr):
                 
+                # f is the number of chanels
                 for i in range(f):
-                    final_arr[index][:, i] = utils.normalize_arr_with_range(seq[:, i])
+                    # need to normalize pixel per pixel
+                    for x in range(h):
+                        for y in range(h):
+                            print(seq[:, i][x][y].shape)
+                            final_arr[index][:, i][x][y] = utils.normalize_arr_with_range(seq[:, i][x][y])
 
             
 
