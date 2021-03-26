@@ -117,7 +117,7 @@ def build_input(df, seq_norm, p_chanels):
     if seq_norm:
 
         if final_arr.ndim > 2:
-            n, s, f = final_arr.shape
+            n, s, f, h, w = final_arr.shape
             for index, seq in enumerate(final_arr):
                 
                 for i in range(f):
